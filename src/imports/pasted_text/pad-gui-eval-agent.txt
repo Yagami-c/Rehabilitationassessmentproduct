@@ -1,0 +1,478 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+PAD 设备全 GUI 评估 Agent
+包含：红旗征、设备确认、僵硬程度、下蹲疼痛评分（含诱因记录）、体型、初次限制、
+推荐模式、设备启动、使用后反馈、使用完成总结、下一次推荐。
+所有几何尺寸均使用 "widthxheight"。
+"""
+
+import tkinter as tk
+from tkinter import ttk, messagebox, BooleanVar, IntVar, StringVar
+
+# ---------- 模式参数库 ----------
+PAD_MODES = {
+    "L1": {"pressure": 100, "application": 15, "rest": 10, "cycles": 10,
+           "user_explain": "你的膝关节不敏感，无紧张，建议从最低强度开始。",
+           "detail_explain": "你的膝关节评估显示无明显敏感和紧张，我们推荐温和的低强度方案（L1）。该模式压力很低，适合初次使用或完全无不适者。",
+           "daily_advice": "每天1次，每次5分钟，使用后观察变化。"},
+    "L2": {"pressure": 125, "application": 15, "rest": 10, "cycles": 10,
+           "user_explain": "你的膝盖有一定敏感，同时伴随轻度紧张，建议从中等偏低强度开始。",
+           "detail_explain": "根据你的情况，你的膝关节存在一定程度的紧张，同时伴随一定的敏感性。我们为你推荐从中等偏低强度开始（L2）。这个强度既能提供一定的松动刺激，又相对温和，更适合作为初始使用强度。建议先按该模式使用，并在使用后再次做下蹲测试，我们会根据你的变化帮你进一步调整。",
+           "daily_advice": "每天1-2次，每次5-10分钟，使用后观察变化。"},
+    "L3": {"pressure": 125, "application": 30, "rest": 10, "cycles": 5,
+           "user_explain": "你的膝盖有明显紧张感，建议从中等强度开始，适当延长作用时间。",
+           "detail_explain": "评估显示你的膝关节紧张程度较明显，但敏感性中等。推荐L3模式，在保持中等负压的基础上延长施加时间至30秒，帮助缓解僵硬。",
+           "daily_advice": "每天1-2次，每次约10分钟，使用后注意放松。"},
+    "H1": {"pressure": 150, "application": 90, "rest": 10, "cycles": 3,
+           "user_explain": "你的膝关节有较强的紧张和一定敏感性，建议从高压短周期模式开始。",
+           "detail_explain": "你的僵硬程度较高，且下蹲疼痛评分不低，不适合长时间低速脉冲。推荐H1模式：较高负压、较短作用时间，以快速疏通不适区域。",
+           "daily_advice": "每天1次，每次约5分钟，使用后评估反应。"},
+    "H2": {"pressure": 150, "application": 180, "rest": 10, "cycles": 3,
+           "user_explain": "你的膝关节紧张明显且适应性较好，建议采用高压中长持续模式。",
+           "detail_explain": "你的僵硬程度突出，但已经有耐受基础，推荐H2模式：中等高压、持续180秒，实现深层按压。",
+           "daily_advice": "每天1次，每次约10分钟，注意观察皮肤反应。"},
+    "H3": {"pressure": 200, "application": 180, "rest": 10, "cycles": 3,
+           "user_explain": "你的膝关节僵硬显著且需求较高，建议采用最强高压强化模式。",
+           "detail_explain": "你的僵硬和不适程度较高，需要强力刺激。推荐H3模式：200 mmHg高压，持久作用，适合有明确机械需求者。",
+           "daily_advice": "每天1次，每次约10分钟，使用前后可冰敷。"},
+}
+
+class PADApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("PAD 智能评估助手")
+        self.root.geometry("600x550")
+        self.root.resizable(False, False)
+
+        # 评估变量
+        self.level = 2          # 当前强度等级 1-6
+        self.squat_before = 0
+        self.stiffness_desc = ""
+        self.body_type_desc = ""
+        self.first_time = False
+        self.pain_triggers = []
+
+        # 使用后反馈变量
+        self.squat_after = None
+        self.global_effect = None
+        self.intensity_feel = None
+        self.adverse_flags = []
+
+        self.main_frame = ttk.Frame(self.root)
+        self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        self.step = 0
+        self.show_step1()
+
+    def clear_frame(self):
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+
+    def next_step(self):
+        self.clear_frame()
+        self.step += 1
+        steps = [self.show_step1, self.show_step2, self.show_step3,
+                 self.show_step4, self.show_step5, self.show_step6, self.show_recommendation]
+        if self.step < len(steps):
+            steps[self.step]()
+
+    # ---------- 第一步 ----------
+    def show_step1(self):
+        ttk.Label(self.main_frame, text="第一步：安全筛查（红旗征）", font=("Arial", 14, "bold")).pack(pady=10)
+        ttk.Label(self.main_frame, text="以下情况是否符合你？（可多选）").pack(pady=5)
+        self.flag_vars = []
+        flags = ["最近2周内有明显受伤", "膝盖明显肿胀", "有伤口或皮肤问题", "医生建议避免使用类似设备", "以上都没有"]
+        for f in flags:
+            var = BooleanVar()
+            chk = ttk.Checkbutton(self.main_frame, text=f, variable=var)
+            chk.pack(anchor="w", padx=20)
+            self.flag_vars.append((f, var))
+        ttk.Button(self.main_frame, text="提交", command=self.check_red_flags).pack(pady=20)
+
+    def check_red_flags(self):
+        selected = [f for f, var in self.flag_vars if var.get()]
+        if not selected:
+            messagebox.showerror("错误", "请至少选择一项")
+            return
+        if "以上都没有" in selected and len(selected) > 1:
+            messagebox.showerror("矛盾", "不能同时选择“以上都没有”和其他项")
+            return
+        has_risk = any(f != "以上都没有" for f in selected)
+        if has_risk:
+            messagebox.showerror("评估终止", "存在红旗征，暂时不推荐使用PAD，建议咨询专业人员。")
+            self.root.destroy()
+        else:
+            messagebox.showinfo("通过", "红旗征通过，进入下一步。")
+            self.next_step()
+
+    # ---------- 第二步 ----------
+    def show_step2(self):
+        ttk.Label(self.main_frame, text="第二步：设备佩戴确认", font=("Arial", 14, "bold")).pack(pady=10)
+        ttk.Label(self.main_frame, text="请确保设备已正确佩戴在膝盖上。").pack(pady=20)
+        btn_frame = ttk.Frame(self.main_frame)
+        btn_frame.pack(pady=20)
+        ttk.Button(btn_frame, text="已戴好，继续", command=self.next_step).pack(side="left", padx=10)
+        ttk.Button(btn_frame, text="未戴好，退出", command=self.root.destroy).pack(side="left", padx=10)
+
+    # ---------- 第三步 ----------
+    def show_step3(self):
+        ttk.Label(self.main_frame, text="第三步：僵硬/紧张程度评估", font=("Arial", 14, "bold")).pack(pady=10)
+        ttk.Label(self.main_frame, text="你是否感觉膝盖有点紧或活动不开？").pack(pady=10)
+        self.stiffness_var = IntVar()
+        for text, val in [("没有 (0) → L2", 0), ("有一点 (1) → L3", 1), ("明显 (2) → L4", 2)]:
+            ttk.Radiobutton(self.main_frame, text=text, variable=self.stiffness_var, value=val).pack(anchor="w", padx=20)
+        ttk.Button(self.main_frame, text="下一步", command=self.process_stiffness).pack(pady=20)
+
+    def process_stiffness(self):
+        val = self.stiffness_var.get()
+        if val == 0:
+            self.level = 2
+            self.stiffness_desc = "没有僵硬感"
+        elif val == 1:
+            self.level = 3
+            self.stiffness_desc = "有一点僵硬"
+        elif val == 2:
+            self.level = 4
+            self.stiffness_desc = "明显僵硬"
+        else:
+            messagebox.showerror("错误", "请选择一个选项")
+            return
+        self.next_step()
+
+    # ---------- 第四步 ----------
+    def show_step4(self):
+        ttk.Label(self.main_frame, text="第四步：下蹲疼痛评分", font=("Arial", 14, "bold")).pack(pady=10)
+        ttk.Label(self.main_frame, text="当你下蹲时，膝盖不适程度是？（0-10分）").pack(pady=5)
+        self.pain_scale = tk.Scale(self.main_frame, from_=0, to=10, orient="horizontal", length=300)
+        self.pain_scale.pack(pady=10)
+
+        ttk.Label(self.main_frame, text="以下哪些动作会让你膝盖不舒服？（可多选，仅记录）", font=("Arial", 10)).pack(pady=10)
+        pain_opts = ["上下楼梯", "久坐后站起", "跑步/运动", "没有明显诱因"]
+        self.pain_vars = {}
+        for opt in pain_opts:
+            var = BooleanVar()
+            chk = ttk.Checkbutton(self.main_frame, text=opt, variable=var)
+            chk.pack(anchor="w", padx=20)
+            self.pain_vars[opt] = var
+        ttk.Button(self.main_frame, text="下一步", command=self.process_squat_pain).pack(pady=20)
+
+    def process_squat_pain(self):
+        self.squat_before = self.pain_scale.get()
+        selected = [opt for opt, var in self.pain_vars.items() if var.get()]
+        if "没有明显诱因" in selected and len(selected) > 1:
+            messagebox.showerror("矛盾", "不能同时选择“没有明显诱因”和其他动作")
+            return
+        self.pain_triggers = selected
+
+        old = self.level
+        if self.squat_before >= 7:
+            self.level = max(1, old - 1)
+            reason = f"疼痛 {self.squat_before} 分 (≥7) → 等级 -1"
+        elif 4 <= self.squat_before <= 6:
+            reason = f"疼痛 {self.squat_before} 分 (4-6) → 等级 不变"
+        else:
+            self.level = min(6, old + 1)
+            reason = f"疼痛 {self.squat_before} 分 (<4) → 等级 +1"
+        messagebox.showinfo("调整结果", f"{reason}\n等级变化: {old} → {self.level}")
+        self.next_step()
+
+    # ---------- 第五步 ----------
+    def show_step5(self):
+        ttk.Label(self.main_frame, text="第五步：体型评估", font=("Arial", 14, "bold")).pack(pady=10)
+        ttk.Label(self.main_frame, text="请选择最符合你的体型（软组织厚度影响负压传导）").pack(pady=5)
+        self.body_var = IntVar()
+        for text, val in [("偏瘦 → 等级 -1", -1), ("标准（中等） → 等级 不变", 0), ("偏厚 → 等级 +1", 1)]:
+            ttk.Radiobutton(self.main_frame, text=text, variable=self.body_var, value=val).pack(anchor="w", padx=20)
+        ttk.Button(self.main_frame, text="下一步", command=self.process_body).pack(pady=20)
+
+    def process_body(self):
+        delta = self.body_var.get()
+        if delta not in (-1, 0, 1):
+            messagebox.showerror("错误", "请选择一个体型")
+            return
+        if delta == -1:
+            self.body_type_desc = "偏瘦"
+        elif delta == 0:
+            self.body_type_desc = "标准"
+        else:
+            self.body_type_desc = "偏厚"
+        old = self.level
+        self.level = max(1, min(6, old + delta))
+        messagebox.showinfo("体型调整", f"体型 {self.body_type_desc} 调整 {delta:+d}\n等级变化: {old} → {self.level}")
+        self.next_step()
+
+    # ---------- 第六步 ----------
+    def show_step6(self):
+        ttk.Label(self.main_frame, text="第六步：初次使用限制", font=("Arial", 14, "bold")).pack(pady=10)
+        ttk.Label(self.main_frame, text="你是第一次使用这个设备吗？").pack(pady=10)
+        self.first_time_var = IntVar()
+        ttk.Radiobutton(self.main_frame, text="是", variable=self.first_time_var, value=1).pack(anchor="w", padx=20)
+        ttk.Radiobutton(self.main_frame, text="不是", variable=self.first_time_var, value=0).pack(anchor="w", padx=20)
+        ttk.Button(self.main_frame, text="下一步", command=self.process_first_time).pack(pady=20)
+
+    def process_first_time(self):
+        is_first = self.first_time_var.get()
+        if is_first == 1:
+            self.first_time = True
+            old = self.level
+            self.level = min(self.level, 2)
+            messagebox.showinfo("限制", f"您是第一次使用，等级限制最高为 L2\n等级变化: {old} → {self.level}")
+        elif is_first == 0:
+            self.first_time = False
+        else:
+            messagebox.showerror("错误", "请选择一个选项")
+            return
+        self.next_step()
+
+    # ---------- 推荐模式 ----------
+    def show_recommendation(self):
+        self.clear_frame()
+        mode_map = {1: "L1", 2: "L2", 3: "L3", 4: "H1", 5: "H2", 6: "H3"}
+        mode = mode_map.get(self.level, "L1")
+        params = PAD_MODES[mode]
+
+        ttk.Label(self.main_frame, text="🎯 你的推荐模式", font=("Arial", 16, "bold")).pack(pady=5)
+        ttk.Label(self.main_frame, text=f"{mode}（{'高压' if mode.startswith('H') else '低压'}{mode[1]}）",
+                  font=("Arial", 20, "bold"), foreground="blue").pack(pady=5)
+
+        ttk.Label(self.main_frame, text="📖 简要说明", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10,0))
+        ttk.Label(self.main_frame, text=params["user_explain"], wraplength=550, justify="left").pack(padx=10)
+
+        ttk.Label(self.main_frame, text="⚙️ 使用参数", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10,0))
+        param_text = f"压力：{params['pressure']} mmHg\n时长：{params['application']} 秒\n休息：{params['rest']} 秒\n循环：{params['cycles']} 次"
+        ttk.Label(self.main_frame, text=param_text, justify="left", background="#f0f0f0", padding=5).pack(padx=10, fill="x")
+
+        ttk.Label(self.main_frame, text="📝 详细评估说明", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10,0))
+        ttk.Label(self.main_frame, text=params["detail_explain"], wraplength=550, justify="left").pack(padx=10)
+
+        ttk.Label(self.main_frame, text="💡 使用建议", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10,0))
+        ttk.Label(self.main_frame, text=params["daily_advice"], wraplength=550, justify="left").pack(padx=10)
+
+        btn_frame = ttk.Frame(self.main_frame)
+        btn_frame.pack(pady=20)
+        ttk.Button(btn_frame, text="▶ 开启设备", command=self.start_device).pack(side="left", padx=10)
+        ttk.Button(btn_frame, text="关闭", command=self.root.destroy).pack(side="left", padx=10)
+
+        info = f"评估依据：{self.stiffness_desc} | 下蹲疼痛: {self.squat_before}分 | 体型: {self.body_type_desc} | {'首次使用' if self.first_time else '有使用经验'}"
+        ttk.Label(self.main_frame, text=info, font=("Arial", 8), foreground="gray").pack(side="bottom", pady=10)
+
+    def start_device(self):
+        messagebox.showinfo("设备启动", "正在启动 PAD 设备，治疗中...\n（模拟完成）")
+        self.root.destroy()
+        self.show_feedback_window()
+
+    # ---------- 使用后反馈 ----------
+    def show_feedback_window(self):
+        feedback_win = tk.Tk()
+        feedback_win.title("使用后反馈评估")
+        feedback_win.geometry("500x600")
+        feedback_win.resizable(False, False)
+
+        frame = ttk.Frame(feedback_win, padding=20)
+        frame.pack(fill="both", expand=True)
+
+        ttk.Label(frame, text="📊 使用后效果评估", font=("Arial", 14, "bold")).grid(row=0, column=0, pady=10)
+
+        # 1. 下蹲疼痛后测
+        ttk.Label(frame, text="1. 现在再做一次下蹲，你的膝盖不适程度是多少？（0-10分）").grid(row=1, column=0, sticky="w", pady=(10,0))
+        pain_after_scale = tk.Scale(frame, from_=0, to=10, orient="horizontal", length=300)
+        pain_after_scale.grid(row=2, column=0, pady=5)
+
+        # 2. 整体感觉
+        ttk.Label(frame, text="2. 使用后整体感觉如何？").grid(row=3, column=0, sticky="w", pady=(10,0))
+        global_var = StringVar(value="没变化")
+        global_frame = ttk.Frame(frame)
+        global_frame.grid(row=4, column=0, sticky="w", padx=20)
+        ttk.Radiobutton(global_frame, text="更舒服", variable=global_var, value="更舒服").pack(anchor="w")
+        ttk.Radiobutton(global_frame, text="没变化", variable=global_var, value="没变化").pack(anchor="w")
+        ttk.Radiobutton(global_frame, text="更不适", variable=global_var, value="更不适").pack(anchor="w")
+
+        # 3. 强度感觉
+        ttk.Label(frame, text="3. 你觉得刚才的强度怎么样？").grid(row=5, column=0, sticky="w", pady=(10,0))
+        intensity_var = StringVar(value="刚好")
+        intensity_frame = ttk.Frame(frame)
+        intensity_frame.grid(row=6, column=0, sticky="w", padx=20)
+        ttk.Radiobutton(intensity_frame, text="太轻", variable=intensity_var, value="太轻").pack(anchor="w")
+        ttk.Radiobutton(intensity_frame, text="刚好", variable=intensity_var, value="刚好").pack(anchor="w")
+        ttk.Radiobutton(intensity_frame, text="有点强", variable=intensity_var, value="有点强").pack(anchor="w")
+
+        # 4. 不良反应
+        ttk.Label(frame, text="4. 使用后有没有出现以下情况？（可多选）").grid(row=7, column=0, sticky="w", pady=(10,0))
+        adverse_vars = {
+            "明显疼痛加重": BooleanVar(),
+            "皮肤明显不适": BooleanVar(),
+            "膝盖更肿/更胀": BooleanVar(),
+            "没有以上情况": BooleanVar()
+        }
+        adverse_frame = ttk.Frame(frame)
+        adverse_frame.grid(row=8, column=0, sticky="w", padx=20)
+        for text, var in adverse_vars.items():
+            cb = ttk.Checkbutton(adverse_frame, text=text, variable=var)
+            cb.pack(anchor="w")
+
+        def on_adverse_change(*args):
+            if adverse_vars["没有以上情况"].get():
+                for k, v in adverse_vars.items():
+                    if k != "没有以上情况":
+                        v.set(False)
+            else:
+                any_other = any(adverse_vars[k].get() for k in adverse_vars if k != "没有以上情况")
+                if any_other and adverse_vars["没有以上情况"].get():
+                    adverse_vars["没有以上情况"].set(False)
+        for var in adverse_vars.values():
+            var.trace_add('write', on_adverse_change)
+
+        def submit():
+            pain_after = pain_after_scale.get()
+            global_effect = global_var.get()
+            intensity_feel = intensity_var.get()
+            adverse = [txt for txt, var in adverse_vars.items() if var.get()]
+            if "没有以上情况" in adverse:
+                adverse = []
+            # 先显示使用完成总结
+            feedback_win.destroy()
+            self.show_usage_summary(pain_after, global_effect, intensity_feel, adverse)
+
+        ttk.Button(frame, text="提交并查看总结", command=submit).grid(row=9, column=0, pady=20)
+        feedback_win.mainloop()
+
+    # ---------- 使用完成总结（新窗口）----------
+    def show_usage_summary(self, pain_after, global_effect, intensity_feel, adverse):
+        delta_pain = self.squat_before - pain_after
+        # 生成总结结论和数据变化
+        if delta_pain >= 2:
+            pain_change = f"明显改善 🟢 (从 {self.squat_before} 分降至 {pain_after} 分，降低 {delta_pain} 分)"
+            pain_emoji = "🟢"
+        elif delta_pain == 1:
+            pain_change = f"轻度改善 🟡 (从 {self.squat_before} 分降至 {pain_after} 分，降低 {delta_pain} 分)"
+            pain_emoji = "🟡"
+        elif delta_pain == 0:
+            pain_change = f"无变化 ⚪ (仍为 {pain_after} 分)"
+            pain_emoji = "⚪"
+        else:
+            pain_change = f"加重 🔴 (从 {self.squat_before} 分升至 {pain_after} 分，增加 {-delta_pain} 分)"
+            pain_emoji = "🔴"
+
+        # 整体感觉描述
+        if global_effect == "更舒服":
+            global_desc = "整体感觉更舒服 😊"
+        elif global_effect == "没变化":
+            global_desc = "整体感觉无明显变化 😐"
+        else:
+            global_desc = "整体感觉更不适 😖"
+
+        # 不良反应
+        if adverse:
+            adverse_desc = f"⚠️ 出现不良反应：{', '.join(adverse)}"
+        else:
+            adverse_desc = "✅ 无不良反应"
+
+        # 简单解释和下次建议（基于调整规则）
+        next_level, adjust_reason = self.calculate_next_level(pain_after, global_effect, intensity_feel, adverse)
+        mode_map = {1: "L1", 2: "L2", 3: "L3", 4: "H1", 5: "H2", 6: "H3"}
+        current_mode = mode_map.get(self.level, "L1")
+
+        if isinstance(next_level, str):
+            next_mode = next_level  # 可能是暂停咨询信息
+            next_advice = next_level
+        else:
+            next_mode = mode_map.get(next_level, "L1")
+            if next_level > self.level:
+                next_advice = f"建议下次尝试更高一级（{next_mode}），以获得更好的效果。"
+            elif next_level < self.level:
+                next_advice = f"建议下次降低一级（{next_mode}），避免不适。"
+            else:
+                next_advice = f"当前强度（{current_mode}）合适，可维持使用。"
+
+        # 强度感受
+        if intensity_feel == "太轻":
+            feel_desc = "强度感觉偏轻"
+        elif intensity_feel == "有点强":
+            feel_desc = "强度感觉偏强"
+        else:
+            feel_desc = "强度感觉刚好"
+
+        # 构建总结文本
+        conclusion = f"你的下蹲不适由 {self.squat_before} → {pain_after}，{pain_change}"
+        data_text = f"• 疼痛变化：{pain_change}\n• 整体感觉：{global_desc}\n• 强度感受：{feel_desc}\n• 不良反应：{adverse_desc}"
+        explanation = f"根据使用后反馈，{adjust_reason}。{next_advice}"
+
+        # 显示总结窗口
+        summary_win = tk.Tk()
+        summary_win.title("使用完成总结")
+        summary_win.geometry("550x450")
+        summary_win.resizable(False, False)
+
+        frame = ttk.Frame(summary_win, padding=20)
+        frame.pack(fill="both", expand=True)
+
+        ttk.Label(frame, text="📋 使用完成总结", font=("Arial", 16, "bold")).pack(pady=10)
+
+        # 1. 总结结论
+        ttk.Label(frame, text="1. 总结结论", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10,0))
+        ttk.Label(frame, text=conclusion, wraplength=500, justify="left").pack(padx=10)
+
+        # 2. 数据变化
+        ttk.Label(frame, text="2. 数据变化", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10,0))
+        ttk.Label(frame, text=data_text, wraplength=500, justify="left", font=("Arial", 10)).pack(padx=10)
+
+        # 3. 简单解释
+        ttk.Label(frame, text="3. 简单解释", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10,0))
+        ttk.Label(frame, text=explanation, wraplength=500, justify="left").pack(padx=10)
+
+        # 4. 下次建议
+        ttk.Label(frame, text="4. 下次建议", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10,0))
+        ttk.Label(frame, text=next_advice, wraplength=500, justify="left", font=("Arial", 10, "bold"), foreground="blue").pack(padx=10)
+
+        # 按钮：查看详细参数
+        def show_next_params():
+            if not isinstance(next_level, int) or next_level < 1:
+                messagebox.showinfo("提示", next_advice)
+                return
+            params = PAD_MODES[next_mode]
+            param_text = f"模式：{next_mode}\n压力：{params['pressure']} mmHg\n持续时间：{params['application']} 秒\n休息：{params['rest']} 秒\n循环：{params['cycles']} 次"
+            messagebox.showinfo("下次推荐参数", param_text)
+
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack(pady=20)
+        ttk.Button(btn_frame, text="查看下次详细参数", command=show_next_params).pack(side="left", padx=10)
+        ttk.Button(btn_frame, text="关闭", command=summary_win.destroy).pack(side="left", padx=10)
+
+        summary_win.mainloop()
+
+    # ---------- 根据反馈计算下一次推荐 ----------
+    def calculate_next_level(self, pain_after, global_effect, intensity_feel, adverse):
+        delta_pain = self.squat_before - pain_after
+        # Step1: 不良反应
+        if adverse:
+            next_level = self.level - 1
+            if next_level < 1:
+                return "暂停使用，请咨询专业人员", "出现不良反应，建议暂停"
+            return next_level, "因出现不良反应，降低一级"
+        # Step2: 疼痛加重或整体更不适
+        if delta_pain < 0 or global_effect == "更不适":
+            next_level = self.level - 1
+            if next_level < 1:
+                return "暂停使用，请咨询专业人员", "不适加重，建议暂停"
+            return next_level, "使用后不适感加重，降低一级"
+        # Step3: 强度感觉有点强
+        if intensity_feel == "有点强":
+            next_level = self.level - 1
+            if next_level < 1:
+                return "暂停使用，请咨询专业人员", "强度过强，建议暂停"
+            return next_level, "您感觉强度偏强，应降低一级"
+        # Step4: 强度感觉太轻
+        if intensity_feel == "太轻":
+            next_level = self.level + 1
+            if next_level > 6:
+                return "L6 (已达最高强度)", "已达最高强度，请谨慎使用"
+            return next_level, "您感觉强度偏轻，可增加一级"
+        # 默认不变
+        return self.level, "无特殊不适或反馈，维持当前强度"
+
+# ---------- 启动 ----------
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PADApp(root)
+    root.mainloop()
