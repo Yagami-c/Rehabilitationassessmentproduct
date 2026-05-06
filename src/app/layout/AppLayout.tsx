@@ -150,7 +150,7 @@ export function AppLayout() {
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-gray-300" />
                     <div>
-                      <div className="font-bold text-[15px] text-gray-700">低频脉冲治疗仪</div>
+                      <div className="font-bold text-[15px] text-gray-700">Led 治疗仪</div>
                       <div className="text-xs text-gray-400 mt-0.5">信号: -78dBm</div>
                     </div>
                   </div>

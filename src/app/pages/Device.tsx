@@ -24,7 +24,7 @@ export function Device() {
   
   const devices = [
     { id: 'PAD-Smart-Knee', name: '智能膝关节理疗仪 PAD', signal: -45 },
-    { id: 'TENS-Unit-102', name: '低频脉冲治疗仪', signal: -78 },
+    { id: 'TENS-Unit-102', name: 'Led 治疗仪', signal: -78 },
   ];
 
   const handleScan = () => {
