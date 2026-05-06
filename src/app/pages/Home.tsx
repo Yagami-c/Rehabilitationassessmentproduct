@@ -153,7 +153,7 @@ export function Home() {
                   <Bar key="home-bar" dataKey="duration" fill="#93C5FD" radius={[4, 4, 4, 4]} barSize={12} name="时长(分钟)">
                     {
                       [15, 30, 20, 45, 25, 0, 0].map((val, i) => (
-                        <Cell key={`bar-cell-${i}`} fill={val > 30 ? '#3B82F6' : '#93C5FD'} />
+                        <Cell key={`home-bar-cell-${i}`} fill={val > 30 ? '#3B82F6' : '#93C5FD'} />
                       ))
                     }
                   </Bar>
@@ -171,8 +171,12 @@ export function Home() {
           onClose={() => setShowDeviceModal(false)}
           onSelect={(deviceId) => {
             setShowDeviceModal(false);
-            if (deviceId === 'joint') {
+            if (deviceId === 'joint_retest' || deviceId === 'joint') {
               navigate('/device-questionnaire');
+            } else if (deviceId === 'joint_history') {
+              navigate('/device');
+            } else {
+              navigate('/training/playback');
             }
           }} 
         />

@@ -15,6 +15,7 @@ export function PostAssessment() {
     intensityFeeling: '刚好' as '太轻' | '刚好' | '有点强',
     adverseReactions: [] as string[]
   });
+  const [showNextActionModal, setShowNextActionModal] = useState(false);
 
   const adverseOptions = ["明显疼痛加重", "皮肤明显不适", "膝盖更肿/更胀", "没有以上情况"];
 
@@ -34,7 +35,7 @@ export function PostAssessment() {
   const submit = () => {
     setPostAssessment(formData);
     calculatePostAssessmentLevel();
-    navigate('/education'); // Go to education before final summary
+    setShowNextActionModal(true); // Show action modal instead of navigating right away
   };
 
   return (
@@ -122,6 +123,40 @@ export function PostAssessment() {
           {step < 4 && <ChevronRight size={18} />}
         </button>
       </div>
+
+      {/* Next Action Modal */}
+      {showNextActionModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative overflow-hidden text-center">
+            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">反馈已记录</h2>
+            <p className="text-[13px] text-gray-500 mb-6">设备使用已完成，您可以选择接下来的安排：</p>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={() => navigate('/training')}
+                className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold shadow-sm shadow-blue-200 active:scale-95 transition-transform"
+              >
+                推荐训练
+              </button>
+              <button 
+                onClick={() => navigate('/education')}
+                className="w-full py-3.5 bg-purple-50 text-purple-700 rounded-xl font-bold border border-purple-100 active:scale-95 transition-transform"
+              >
+                宣传教育
+              </button>
+              <button 
+                onClick={() => navigate('/')}
+                className="w-full py-3.5 bg-gray-50 text-gray-600 rounded-xl font-bold active:scale-95 transition-transform"
+              >
+                跳过
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

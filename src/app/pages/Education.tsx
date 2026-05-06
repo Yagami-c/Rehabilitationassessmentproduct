@@ -3,12 +3,13 @@ import { Info, InfoIcon, ExternalLink, Thermometer, Snowflake, ChevronDown, Chev
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'motion/react';
-import image10 from '../../imports/image-21.png';
-import image11 from '../../imports/c329110360de4a29acb7b8567e91b772.png';
-import image12 from '../../imports/image-22.png';
-import image13 from '../../imports/image-23.png';
-import image14 from '../../imports/image-24.png';
-import image15 from '../../imports/image-25.png';
+import image10 from '../../imports/image-10.png';
+import image11 from '../../imports/image-11.png';
+import image12 from '../../imports/image-12.png';
+import image13 from '../../imports/image-13.png';
+import image14 from '../../imports/image-14.png';
+import image15 from '../../imports/image-15.png';
+import image22 from '../../imports/image-22.png';
 
 export function Education() {
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
@@ -258,12 +259,8 @@ export function Education() {
               {expandedCard === 5 ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
             </div>
             <div className="p-4">
-              <div className="w-full h-32 bg-gray-100 rounded-xl mb-4 overflow-hidden relative flex items-center justify-center bg-gradient-to-br from-rose-50 to-orange-50">
-                <ImageWithFallback src="https://images.unsplash.com/photo-1649751361457-01d3a696c7e6?w=600&q=80" alt="Knee pain signal" className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-40" />
-                <div className="relative z-10 w-16 h-16 rounded-full border-2 border-rose-300 animate-ping opacity-70"></div>
-                <div className="absolute z-10 w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-white">
-                  <AlertCircle size={18} />
-                </div>
+              <div className="w-full h-40 bg-white rounded-xl mb-4 overflow-hidden">
+                <ImageWithFallback src={image22} alt="Knee pain signal" className="w-full h-full object-contain" />
               </div>
               
               <div className="space-y-3">

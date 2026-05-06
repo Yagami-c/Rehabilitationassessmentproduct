@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ChevronLeft, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { ChevronLeft, AlertCircle, CheckCircle2, Info, Smile, Meh, Frown, Annoyed, Angry } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Slider } from '../components/ui/slider';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import image16 from '../../imports/image-16.png';
 import image17 from '../../imports/image-17.png';
+import image5 from '../../imports/image-5.png';
 
 export function DeviceQuestionnaire() {
   const navigate = useNavigate();
@@ -197,18 +198,64 @@ export function DeviceQuestionnaire() {
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-6">下蹲疼痛评分</h2>
             <p className="text-gray-600 mb-6">当你下蹲时，膝盖不适程度是？（0-10分）</p>
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 flex flex-col items-center mb-8">
-              <span className="text-5xl font-bold text-blue-600 mb-2">{squatPain}</span>
+            
+            <div className="bg-white pt-8 pb-6 px-5 rounded-2xl border border-gray-100 flex flex-col items-center mb-8 shadow-sm">
+              {(() => {
+                let icon = Smile;
+                let color = "text-green-500";
+                let bg = "bg-green-50";
+                let label = "无痛";
+                
+                if (squatPain >= 9) {
+                  icon = Angry; color = "text-red-600"; bg = "bg-red-50"; label = "剧烈疼痛";
+                } else if (squatPain >= 7) {
+                  icon = Angry; color = "text-orange-500"; bg = "bg-orange-50"; label = "重度疼痛";
+                } else if (squatPain >= 5) {
+                  icon = Annoyed; color = "text-amber-500"; bg = "bg-amber-50"; label = "中度疼痛";
+                } else if (squatPain >= 3) {
+                  icon = Frown; color = "text-yellow-500"; bg = "bg-yellow-50"; label = "轻度疼痛";
+                } else if (squatPain >= 1) {
+                  icon = Meh; color = "text-lime-500"; bg = "bg-lime-50"; label = "轻微疼痛";
+                }
+
+                const Icon = icon;
+
+                return (
+                  <div className="flex flex-col items-center w-full mb-8 relative">
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-colors duration-300 ${bg}`}>
+                      <Icon size={48} className={`${color} transition-transform duration-300 ${squatPain > 0 ? 'scale-110' : ''}`} strokeWidth={1.5} />
+                    </div>
+                    
+                    <div className="flex items-end gap-2">
+                      <span className={`text-5xl font-black tabular-nums tracking-tighter ${color}`}>{squatPain}</span>
+                      <span className="text-gray-500 font-bold mb-1.5 text-lg">{label}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <Slider 
                 value={[squatPain]} 
                 max={10} 
                 step={1} 
                 onValueChange={(val) => setSquatPain(val[0])} 
-                className="w-full mt-4"
+                className="w-full mb-6"
               />
-              <div className="w-full flex justify-between mt-3 text-xs text-gray-400">
-                <span>0 (无痛)</span>
-                <span>10 (剧痛)</span>
+              
+              <div className="w-full flex justify-between px-0.5 text-[11px] text-gray-400 font-medium">
+                {[
+                  { val: 0, text: "无痛", color: "text-green-600" },
+                  { val: 2, text: "轻微", color: "text-lime-600" },
+                  { val: 4, text: "轻度", color: "text-yellow-600" },
+                  { val: 6, text: "中度", color: "text-amber-600" },
+                  { val: 8, text: "重度", color: "text-orange-600" },
+                  { val: 10, text: "剧烈", color: "text-red-600" },
+                ].map((item) => (
+                  <div key={item.val} className="flex flex-col items-center w-8 cursor-pointer" onClick={() => setSquatPain(item.val)}>
+                    <span className={`mb-1 transition-colors ${squatPain === item.val ? item.color + " font-bold text-[13px]" : ""}`}>{item.val}</span>
+                    <span className={`whitespace-nowrap transition-all ${squatPain === item.val ? item.color + " font-bold" : "scale-90"}`}>{item.text}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -230,7 +277,7 @@ export function DeviceQuestionnaire() {
 
             <button 
               onClick={handleNext}
-              className="w-full mt-8 bg-blue-600 text-white rounded-xl py-3.5 font-bold shadow-sm"
+              className="w-full mt-8 bg-blue-600 text-white rounded-xl py-3.5 font-bold shadow-sm active:scale-[0.98] transition-transform"
             >
               下一步
             </button>
@@ -239,31 +286,73 @@ export function DeviceQuestionnaire() {
 
         {step === 5 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">体型评估</h2>
-            <div className="w-32 h-32 mx-auto mb-6">
-              <ImageWithFallback src={image17} alt="Body type" className="w-full h-full object-contain" />
+            <div className="text-center mb-8 mt-2">
+              <h2 className="text-[22px] font-extrabold text-gray-900 mb-2">你更接近哪种体型？</h2>
+              <p className="text-gray-500 text-[14px]">请选择最符合你的体型</p>
             </div>
-            <p className="text-gray-600 mb-6 text-center text-sm">请选择最符合你的体型<br/>(软组织厚度影响负压传导)</p>
-            <div className="space-y-3">
+
+            <div className="flex gap-2 justify-between">
               {[
-                { text: "偏瘦", value: -1 },
-                { text: "标准（中等）", value: 0 },
-                { text: "偏厚", value: 1 },
+                { 
+                  text: "偏瘦", 
+                  value: -1, 
+                  desc: "身材偏瘦，四肢较细\n脂肪较少，肌肉不明显",
+                },
+                { 
+                  text: "中等", 
+                  value: 0, 
+                  desc: "身材匀称，肌肉和脂肪\n分布均衡",
+                },
+                { 
+                  text: "偏厚", 
+                  value: 1, 
+                  desc: "身材偏厚，脂肪较多\n肌肉不明显，线条偏圆润",
+                },
               ].map(option => (
                 <button
                   key={option.value}
                   onClick={() => setBodyType(option.value)}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl border text-left ${bodyType === option.value ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700'}`}
+                  className={`relative flex-1 flex flex-col items-center rounded-2xl border-2 transition-all bg-white pb-5 overflow-hidden ${bodyType === option.value ? 'border-blue-500 shadow-md ring-2 ring-blue-50/50' : 'border-gray-100 hover:border-gray-200'}`}
                 >
-                  <span className="font-medium">{option.text}</span>
-                  {bodyType === option.value && <CheckCircle2 size={20} className="text-blue-600" />}
+                  <div className="w-full aspect-[4/5] bg-[#f8f9fa] relative overflow-hidden mb-3 border-b border-gray-50">
+                     <img 
+                       src={image5} 
+                       className="absolute pointer-events-none max-w-none" 
+                       style={{ 
+                         width: '320%',
+                         height: 'auto',
+                         left: option.value === -1 ? '0%' : option.value === 0 ? '-110%' : '-220%',
+                         top: '-25%'
+                       }} 
+                       alt={option.text}
+                     />
+                  </div>
+                  
+                  <div className="px-2 flex flex-col items-center w-full">
+                    <h3 className={`text-[16px] font-extrabold mb-1.5 ${bodyType === option.value ? 'text-blue-600' : 'text-gray-800'}`}>
+                      {option.text}
+                    </h3>
+                    <p className="text-[10px] text-gray-500 text-center leading-relaxed h-12 flex items-center justify-center whitespace-pre-line mb-4">
+                      {option.desc}
+                    </p>
+                    
+                    <div className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center shrink-0 transition-colors ${bodyType === option.value ? 'border-blue-600 bg-white' : 'border-gray-300 bg-white'}`}>
+                      {bodyType === option.value && <div className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-in zoom-in duration-200"></div>}
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
+
+            <div className="mt-8 text-center text-xs text-gray-400 flex items-center justify-center gap-1">
+              <Info size={14} />
+              <span>软组织厚度会影响负压传导效果，请如实选择</span>
+            </div>
+
             <button 
               onClick={handleNext}
               disabled={bodyType === null}
-              className="w-full mt-8 bg-blue-600 disabled:opacity-50 text-white rounded-xl py-3.5 font-bold shadow-sm"
+              className="w-full mt-6 bg-blue-600 disabled:opacity-50 disabled:active:scale-100 text-white rounded-xl py-3.5 font-bold shadow-sm active:scale-[0.98] transition-transform"
             >
               下一步
             </button>
