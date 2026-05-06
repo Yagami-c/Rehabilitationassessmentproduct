@@ -46,87 +46,87 @@ export function Login() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white relative max-w-md mx-auto shadow-2xl overflow-y-auto">
-      <div className="flex-1 px-6 pt-20 pb-8">
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-24 h-24 mb-4 rounded-2xl overflow-hidden shadow-lg shadow-blue-100 flex items-center justify-center bg-white p-2">
+    <div className="flex flex-col h-screen bg-white relative w-full mx-auto overflow-y-auto font-sans">
+      <div className="flex-1 px-6 pt-24 pb-8">
+        <div className="flex flex-col items-center mb-12">
+          <div className="w-20 h-20 mb-5 rounded-2xl overflow-hidden bg-white p-1">
             <ImageWithFallback src={companyLogo} alt="Company Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">康复评估平台</h1>
-          <p className="text-sm text-gray-500 mt-2">科学的数字康复服务</p>
+          <h1 className="text-[24px] font-bold text-gray-900 tracking-wide">康复评估平台</h1>
+          <p className="text-[14px] text-gray-500 mt-2">科学的数字康复服务</p>
         </div>
 
         {/* Tabs for Login vs Register */}
-        <div className="flex bg-gray-100 p-1 rounded-xl mb-8">
+        <div className="flex bg-[#F7F7F8] p-1 rounded-xl mb-10 w-[240px] mx-auto">
           <button
             onClick={() => setIsLoginTab(true)}
             className={clsx(
-              "flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all",
-              isLoginTab ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+              "flex-1 py-2 text-[14px] font-medium rounded-lg flex items-center justify-center transition-all",
+              isLoginTab ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
             )}
           >
-            手机号登录
+            手机号
           </button>
           <button
             onClick={() => setIsLoginTab(false)}
             className={clsx(
-              "flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all",
-              !isLoginTab ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+              "flex-1 py-2 text-[14px] font-medium rounded-lg flex items-center justify-center transition-all",
+              !isLoginTab ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
             )}
           >
-            邮箱登录
+            邮箱
           </button>
         </div>
 
         {/* Forms */}
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-sm text-gray-700 font-medium">{isLoginTab ? '手机号码' : '邮箱地址'}</label>
+        <div className="space-y-6">
+          <div className="border-b border-gray-100 flex items-center py-3">
+            <label className="text-[16px] text-gray-900 font-medium w-20">{isLoginTab ? '手机号' : '邮箱'}</label>
             <input 
               type={isLoginTab ? 'tel' : 'email'}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full h-12 bg-gray-50 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all" 
+              className="flex-1 h-8 bg-transparent text-[16px] focus:outline-none placeholder-gray-300" 
               placeholder={isLoginTab ? '请输入手机号' : '请输入邮箱'} 
             />
           </div>
           
-          <div className="space-y-1">
-            <label className="text-sm text-gray-700 font-medium">验证码</label>
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="flex-1 h-12 bg-gray-50 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all" 
-                placeholder="任意验证码即可" 
-              />
-              <button className="h-12 px-4 rounded-xl text-blue-600 border border-blue-200 bg-blue-50 text-sm font-medium active:bg-blue-100 transition-colors whitespace-nowrap">
-                获取验证码
-              </button>
-            </div>
+          <div className="border-b border-gray-100 flex items-center py-3">
+            <label className="text-[16px] text-gray-900 font-medium w-20">验证码</label>
+            <input 
+              type="text" 
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="flex-1 h-8 bg-transparent text-[16px] focus:outline-none placeholder-gray-300" 
+              placeholder="请输入验证码" 
+            />
+            <button className="text-[#2563EB] text-[14px] font-medium pl-4 border-l border-gray-200 active:opacity-70">
+              获取验证码
+            </button>
           </div>
 
           <button 
             onClick={handleSubmit} 
             disabled={!isFormValid || !agreed}
-            className="w-full h-12 bg-blue-600 active:bg-blue-700 disabled:opacity-50 disabled:active:bg-blue-600 text-white font-medium text-[15px] mt-6 rounded-xl transition-all"
+            className="w-full h-12 bg-[#2563EB] active:bg-blue-700 disabled:opacity-40 disabled:active:bg-[#2563EB] text-white font-bold text-[16px] mt-8 rounded-[8px] transition-all"
           >
             登录
           </button>
 
-          <div className="flex items-center space-x-2 mt-4 text-sm">
+          <div className="flex items-start space-x-2 mt-4 text-[12px]">
             <button 
               onClick={() => setAgreed(!agreed)}
               className={clsx(
-                "w-5 h-5 rounded-md flex items-center justify-center border transition-colors shrink-0",
-                agreed ? "bg-blue-600 border-blue-600" : "bg-white border-gray-300"
+                "w-4 h-4 rounded-full flex items-center justify-center border transition-colors shrink-0 mt-0.5",
+                agreed ? "bg-[#2563EB] border-[#2563EB]" : "bg-white border-gray-300"
               )}
             >
-              {agreed && <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white fill-current"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>}
+              {agreed && <svg viewBox="0 0 24 24" className="w-3 h-3 text-white fill-current"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>}
             </button>
-            <span className="text-gray-500 font-normal select-none text-[13px]">
-              我已阅读并同意 <span onClick={(e) => { e.stopPropagation(); setShowTerms(true); }} className="text-blue-600 cursor-pointer active:opacity-70">《隐私协议》</span> 和 <span onClick={(e) => { e.stopPropagation(); setShowTerms(true); }} className="text-blue-600 cursor-pointer active:opacity-70">《服务协议》</span>
+            <span className="text-gray-500 font-normal leading-tight">
+              我已阅读并同意 
+              <span onClick={(e) => { e.stopPropagation(); setShowTerms(true); }} className="text-[#2563EB] cursor-pointer active:opacity-70">《隐私协议》</span> 和 
+              <span onClick={(e) => { e.stopPropagation(); setShowTerms(true); }} className="text-[#2563EB] cursor-pointer active:opacity-70">《服务协议》</span>
             </span>
           </div>
         </div>

@@ -21,17 +21,16 @@ export function Home() {
   }, [profile, navigate]);
 
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="px-5 pt-4 space-y-6">
-        
-        {/* Greeting Section */}
+    <div className="flex flex-col h-full relative bg-[#F7F7F8]">
+      {/* Top Greeting Block */}
+      <div className="bg-white px-5 pt-6 pb-6 rounded-b-[24px]">
         <div>
           <h2 className="text-[22px] font-bold text-gray-900 tracking-tight">你好，{profile?.name || '朋友'}</h2>
-          <p className="text-sm text-gray-500 mt-1">今天的康复计划已为你准备好</p>
+          <p className="text-[14px] text-gray-500 mt-1">今天的康复计划已为你准备好</p>
         </div>
 
         {/* Smart Recommendation Card */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-5 shadow-lg shadow-blue-200 text-white relative overflow-hidden">
+        <div className="mt-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-[16px] p-5 text-white relative overflow-hidden shadow-[0_8px_20px_rgba(37,99,235,0.15)]">
           {/* Decorative rings */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
           
@@ -67,99 +66,103 @@ export function Home() {
           
           <button 
             onClick={() => setShowDeviceModal(true)}
-            className="w-full bg-white text-blue-600 rounded-xl py-3.5 font-bold text-sm shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all relative z-10"
+            className="w-full bg-white text-blue-600 rounded-xl py-3 font-bold text-[15px] shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all relative z-10"
           >
             <Play size={16} className="fill-blue-600" /> 开始训练
           </button>
         </div>
+      </div>
 
+      <div className="px-4 pt-4 space-y-4 pb-8">
+        
         {/* Today's Tasks */}
-        <div>
-          <div className="flex justify-between items-center mb-4 px-1">
+        <div className="bg-white rounded-[16px] p-4 shadow-sm">
+          <div className="flex justify-between items-center mb-3">
             <h3 className="text-[16px] font-bold text-gray-900 flex items-center gap-2">
               今日待办
             </h3>
-            <span className="text-[11px] font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">完成度 1/3</span>
+            <span className="text-[12px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-center">进度 1/3</span>
           </div>
           
-          <div className="space-y-3">
+          <div className="flex flex-col">
             {/* Task 1 (Active) */}
-            <div className="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div 
+              onClick={() => navigate('/training')}
+              className="flex items-center gap-3 py-4 border-b border-gray-50 active:bg-gray-50 transition-colors cursor-pointer"
+            >
               <div className="flex-1">
-                <div className="text-[15px] font-bold text-gray-900">膝关节屈伸训练</div>
-                <div className="text-[12px] text-gray-500 mt-1">10:00 AM · 约15分钟</div>
+                <div className="text-[15px] font-medium text-gray-900">膝关节屈伸训练</div>
+                <div className="text-[12px] text-gray-400 mt-1">10:00 AM · 约15分钟</div>
               </div>
-              <button 
-                onClick={() => navigate('/training')}
-                className="text-[12px] font-bold text-green-600 px-4 py-2 bg-green-50 rounded-xl"
-              >
-                进行中
-              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] text-blue-600 font-medium">进行中</span>
+                <ChevronRight size={16} className="text-gray-300" />
+              </div>
             </div>
 
             {/* Task 2 */}
-            <div className="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div 
+              onClick={() => navigate('/assessment')}
+              className="flex items-center gap-3 py-4 border-b border-gray-50 active:bg-gray-50 transition-colors cursor-pointer"
+            >
               <div className="flex-1">
-                <div className="text-[15px] font-bold text-gray-900">步态动作捕捉评估</div>
-                <div className="text-[12px] text-gray-500 mt-1">14:30 PM · 约10分钟</div>
+                <div className="text-[15px] font-medium text-gray-900">步态动作捕捉评估</div>
+                <div className="text-[12px] text-gray-400 mt-1">14:30 PM · 约10分钟</div>
               </div>
-              <button 
-                onClick={() => navigate('/assessment')}
-                className="text-[12px] font-bold text-white px-4 py-2 bg-blue-600 rounded-xl shadow-sm shadow-blue-200"
-              >
-                开始
-              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] text-gray-400 font-medium">待开始</span>
+                <ChevronRight size={16} className="text-gray-300" />
+              </div>
             </div>
 
             {/* Task 3 */}
-            <div className="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div 
+              onClick={() => navigate('/condition')}
+              className="flex items-center gap-3 py-4 active:bg-gray-50 transition-colors cursor-pointer"
+            >
               <div className="flex-1">
-                <div className="text-[15px] font-bold text-gray-900">疼痛症状记录</div>
-                <div className="text-[12px] text-gray-500 mt-1">20:00 PM · 约3分钟</div>
+                <div className="text-[15px] font-medium text-gray-900">疼痛症状记录</div>
+                <div className="text-[12px] text-gray-400 mt-1">20:00 PM · 约3分钟</div>
               </div>
-              <button 
-                onClick={() => navigate('/condition')}
-                className="text-[12px] font-bold text-gray-500 px-4 py-2 bg-white border border-gray-200 rounded-xl"
-              >
-                去完成
-              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] text-gray-400 font-medium">待去完成</span>
+                <ChevronRight size={16} className="text-gray-300" />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Weekly Stats */}
-        <div className="pb-6">
-          <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
-            <h3 className="text-[16px] font-bold text-gray-900 mb-4">周活动趋势</h3>
-            <div className="h-32 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={[
-                  { day: '一', duration: 15 },
-                  { day: '二', duration: 30 },
-                  { day: '三', duration: 20 },
-                  { day: '四', duration: 45 },
-                  { day: '五', duration: 25 },
-                  { day: '六', duration: 0 },
-                  { day: '日', duration: 0 },
-                ]} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <XAxis key="home-xaxis" dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} dy={10} />
-                  <YAxis key="home-yaxis" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                  <Tooltip 
-                    key="home-tooltip"
-                    cursor={{ fill: '#F3F4F6' }}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                    itemStyle={{ fontSize: '12px', color: '#3B82F6' }}
-                  />
-                  <Bar key="home-bar" dataKey="duration" fill="#93C5FD" radius={[4, 4, 4, 4]} barSize={12} name="时长(分钟)">
-                    {
-                      [15, 30, 20, 45, 25, 0, 0].map((val, i) => (
-                        <Cell key={`home-bar-cell-${i}`} fill={val > 30 ? '#3B82F6' : '#93C5FD'} />
-                      ))
-                    }
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+        <div className="bg-white rounded-[16px] p-4 shadow-sm">
+          <h3 className="text-[16px] font-bold text-gray-900 mb-4">周活动趋势</h3>
+          <div className="h-36 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={[
+                { day: '一', duration: 15 },
+                { day: '二', duration: 30 },
+                { day: '三', duration: 20 },
+                { day: '四', duration: 45 },
+                { day: '五', duration: 25 },
+                { day: '六', duration: 0 },
+                { day: '日', duration: 0 },
+              ]} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <XAxis key="home-xaxis" dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#999999' }} dy={10} />
+                <YAxis key="home-yaxis" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#999999' }} />
+                <Tooltip 
+                  key="home-tooltip"
+                  cursor={{ fill: '#F7F7F8' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  itemStyle={{ fontSize: '12px', color: '#2563EB' }}
+                />
+                <Bar key="home-bar" dataKey="duration" fill="#E1E1E1" radius={[4, 4, 4, 4]} barSize={14} name="时长(分钟)">
+                  {
+                    [15, 30, 20, 45, 25, 0, 0].map((val, i) => (
+                      <Cell key={`home-bar-cell-${i}`} fill={val > 30 ? '#2563EB' : '#93C5FD'} />
+                    ))
+                  }
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 

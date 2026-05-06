@@ -110,7 +110,7 @@ export function Training() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 pb-28 font-sans overflow-y-auto">
+    <div className="flex flex-col h-full bg-[#F7F7F8] pb-28 font-sans overflow-y-auto">
       
       {/* Content Header Section */}
       <div className="px-[20px] pt-[20px] pb-[20px] flex flex-col gap-[16px] bg-white border-b border-gray-100 shadow-sm relative z-40">
