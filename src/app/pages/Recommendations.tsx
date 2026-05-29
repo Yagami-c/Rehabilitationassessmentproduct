@@ -36,7 +36,7 @@ export function Recommendations() {
   return (
     <div className="flex flex-col h-full bg-gray-50 pb-20">
       <div className="bg-blue-600 text-white px-6 pt-12 pb-6">
-        <h2 className="text-xl font-medium mb-2">专属康复计划</h2>
+        <h2 className="text-xl font-medium mb-2">专属康养计划</h2>
         <p className="text-blue-100 text-sm">基于您的最新评估报告生成</p>
       </div>
 

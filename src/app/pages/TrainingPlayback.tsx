@@ -41,7 +41,7 @@ export function TrainingPlayback() {
       setProgress(0);
     } else {
       setIsPlaying(false);
-      navigate(-1); // or show completion screen
+      navigate('/motion-assessment'); // Go to assessment when training finishes
     }
   };
 

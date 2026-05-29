@@ -1,0 +1,60 @@
+{
+  "color": {
+    "background": { "value": "oklch(0.145 0 0)" },
+    "foreground": { "value": "oklch(0.985 0 0)" },
+    "card": {
+      "DEFAULT": { "value": "oklch(0.145 0 0)" },
+      "foreground": { "value": "oklch(0.985 0 0)" }
+    },
+    "popover": {
+      "DEFAULT": { "value": "oklch(0.145 0 0)" },
+      "foreground": { "value": "oklch(0.985 0 0)" }
+    },
+    "primary": {
+      "DEFAULT": { "value": "oklch(0.985 0 0)" },
+      "foreground": { "value": "oklch(0.205 0 0)" }
+    },
+    "secondary": {
+      "DEFAULT": { "value": "oklch(0.269 0 0)" },
+      "foreground": { "value": "oklch(0.985 0 0)" }
+    },
+    "muted": {
+      "DEFAULT": { "value": "oklch(0.269 0 0)" },
+      "foreground": { "value": "oklch(0.708 0 0)" }
+    },
+    "accent": {
+      "DEFAULT": { "value": "oklch(0.269 0 0)" },
+      "foreground": { "value": "oklch(0.985 0 0)" }
+    },
+    "destructive": {
+      "DEFAULT": { "value": "oklch(0.396 0.141 25.723)" },
+      "foreground": { "value": "oklch(0.637 0.237 25.331)" }
+    },
+    "border": { "value": "oklch(0.269 0 0)" },
+    "input": {
+      "DEFAULT": { "value": "oklch(0.269 0 0)" }
+    },
+    "ring": { "value": "oklch(0.439 0 0)" },
+    "chart": {
+      "1": { "value": "oklch(0.488 0.243 264.376)" },
+      "2": { "value": "oklch(0.696 0.17 162.48)" },
+      "3": { "value": "oklch(0.769 0.188 70.08)" },
+      "4": { "value": "oklch(0.627 0.265 303.9)" },
+      "5": { "value": "oklch(0.645 0.246 16.439)" }
+    },
+    "sidebar": {
+      "DEFAULT": { "value": "oklch(0.205 0 0)" },
+      "foreground": { "value": "oklch(0.985 0 0)" },
+      "primary": {
+        "DEFAULT": { "value": "oklch(0.488 0.243 264.376)" },
+        "foreground": { "value": "oklch(0.985 0 0)" }
+      },
+      "accent": {
+        "DEFAULT": { "value": "oklch(0.269 0 0)" },
+        "foreground": { "value": "oklch(0.985 0 0)" }
+      },
+      "border": { "value": "oklch(0.269 0 0)" },
+      "ring": { "value": "oklch(0.439 0 0)" }
+    }
+  }
+}

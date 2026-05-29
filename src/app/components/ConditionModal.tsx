@@ -110,7 +110,7 @@ export function ConditionModal({ onComplete }: { onComplete: () => void }) {
               >
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">请选择你的体型</h3>
-                  <p className="text-sm text-gray-500">这有助于我们更精准地计算理疗设备的负压传导参数</p>
+                  <p className="text-sm text-gray-500">这有助于我们更精准地计算康养设备的负压传导参数</p>
                 </div>
 
                 <div className="flex flex-col gap-4">
@@ -226,7 +226,7 @@ export function ConditionModal({ onComplete }: { onComplete: () => void }) {
               >
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">既往史</h3>
-                  <p className="text-sm text-gray-500">侧重康复相关，请勾选您曾有过的状况（多选）</p>
+                  <p className="text-sm text-gray-500">侧重康养相关，请勾选您曾有过的状况（多选）</p>
                 </div>
 
                 <div className="flex-1 overflow-y-auto pb-4 -mx-2 px-2 custom-scrollbar">

@@ -15,7 +15,7 @@ export function PlanSettings() {
   ]);
 
   const handleSave = () => {
-    toast.success('康复计划已更新', {
+    toast.success('康养计划已更新', {
       style: { borderRadius: '12px', padding: '16px' }
     });
     navigate(-1);
@@ -32,7 +32,7 @@ export function PlanSettings() {
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-700 active:bg-gray-100 rounded-full">
           <ChevronLeft size={24} />
         </button>
-        <h1 className="text-lg font-bold text-gray-900">康复计划设置</h1>
+        <h1 className="text-lg font-bold text-gray-900">康养计划设置</h1>
         <div className="w-10"></div>
       </div>
 
@@ -42,7 +42,7 @@ export function PlanSettings() {
         <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-4">
             <Target size={18} className="text-blue-600" />
-            <h2 className="font-bold text-gray-900">当前康复目标</h2>
+            <h2 className="font-bold text-gray-900">当前康养目标</h2>
           </div>
           <div className="p-4 bg-blue-50 rounded-2xl flex justify-between items-center border border-blue-100">
             <div>

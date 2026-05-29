@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { ChevronLeft, ChevronRight, Activity, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Activity, CheckCircle2, Smile, Meh, Frown, Annoyed, Angry, Play } from 'lucide-react';
 import clsx from 'clsx';
 import { useStore } from '../store/useStore';
-import { PainSlider } from './ConditionForm';
+import { Slider } from '../components/ui/slider';
 
 export function PostAssessment() {
   const navigate = useNavigate();
@@ -16,6 +16,8 @@ export function PostAssessment() {
     adverseReactions: [] as string[]
   });
   const [showNextActionModal, setShowNextActionModal] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const adverseOptions = ["明显疼痛加重", "皮肤明显不适", "膝盖更肿/更胀", "没有以上情况"];
 
@@ -55,17 +57,117 @@ export function PostAssessment() {
       <div className="flex-1 overflow-y-auto p-6 scroll-smooth pb-24">
         {step === 1 && (
           <div className="animate-in slide-in-from-right-4 fade-in duration-300">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">重新测试下蹲</h2>
-            <p className="text-sm text-gray-500 mb-8">现在再做一次下蹲，您的膝盖不适程度是多少？（0-10分）</p>
-            <div className="mb-10">
-              <PainSlider 
-                value={formData.squatPainAfter} 
-                onChange={(val) => setFormData({...formData, squatPainAfter: val})} 
-              />
+            <h2 className="text-xl font-bold text-gray-900 mb-6">下蹲疼痛评分</h2>
+            
+            <div className="bg-blue-50/50 rounded-2xl p-5 mb-8 border border-blue-100 flex flex-col items-center relative overflow-hidden">
+              <div className="text-center mb-4 relative z-10">
+                <p className="text-[13px] text-blue-600 font-medium mb-1">为了对比康养效果，请再次...</p>
+                <h3 className="text-[18px] font-bold text-gray-900">试着做一次标准的下蹲</h3>
+              </div>
+
+              {/* Circular Video Player */}
+              <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg z-10 bg-gray-100 flex items-center justify-center">
+                <video 
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  src="https://www.w3schools.com/html/mov_bbb.mp4"
+                  playsInline
+                  muted
+                  loop
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                />
+                {!isPlaying && (
+                  <button 
+                    onClick={() => {
+                      if (videoRef.current) {
+                        const playPromise = videoRef.current.play();
+                        if (playPromise !== undefined) {
+                          playPromise.catch(error => {
+                            console.log("Playback prevented:", error);
+                          });
+                        }
+                      }
+                      setIsPlaying(true);
+                    }}
+                    className="absolute inset-0 m-auto w-14 h-14 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-transform active:scale-95"
+                  >
+                    <Play size={28} className="ml-1 fill-current" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Background decoration */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-tr from-blue-200/40 to-blue-100/40 rounded-full blur-2xl z-0 pointer-events-none" />
             </div>
+
+            <p className="text-gray-900 font-bold mb-4 text-[16px]">再次下蹲时，膝盖不适程度是？（0-10分）</p>
+            
+            <div className="bg-white pt-8 pb-6 px-5 rounded-2xl border border-gray-100 flex flex-col items-center mb-8 shadow-sm">
+              {(() => {
+                const pain = formData.squatPainAfter;
+                let icon = Smile;
+                let color = "text-green-500";
+                let bg = "bg-green-50";
+                let label = "无痛";
+                
+                if (pain >= 9) {
+                  icon = Angry; color = "text-red-600"; bg = "bg-red-50"; label = "剧烈疼痛";
+                } else if (pain >= 7) {
+                  icon = Angry; color = "text-orange-500"; bg = "bg-orange-50"; label = "重度疼痛";
+                } else if (pain >= 5) {
+                  icon = Annoyed; color = "text-amber-500"; bg = "bg-amber-50"; label = "中度疼痛";
+                } else if (pain >= 3) {
+                  icon = Frown; color = "text-yellow-500"; bg = "bg-yellow-50"; label = "轻度疼痛";
+                } else if (pain >= 1) {
+                  icon = Meh; color = "text-lime-500"; bg = "bg-lime-50"; label = "轻微疼痛";
+                }
+
+                const Icon = icon;
+
+                return (
+                  <div className="flex flex-col items-center w-full mb-8 relative">
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-colors duration-300 ${bg}`}>
+                      <Icon size={48} className={`${color} transition-transform duration-300 ${pain > 0 ? 'scale-110' : ''}`} strokeWidth={1.5} />
+                    </div>
+                    
+                    <div className="flex items-end gap-2">
+                      <span className={`text-5xl font-black tabular-nums tracking-tighter ${color}`}>{pain}</span>
+                      <span className="text-gray-500 font-bold mb-1.5 text-lg">{label}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <Slider 
+                value={[formData.squatPainAfter]} 
+                max={10} 
+                step={1} 
+                onValueChange={(val) => setFormData({...formData, squatPainAfter: val[0]})} 
+                className="w-full mb-6"
+              />
+              
+              <div className="w-full flex justify-between px-0.5 text-[11px] text-gray-400 font-medium">
+                {[
+                  { val: 0, text: "无痛", color: "text-green-600" },
+                  { val: 2, text: "轻微", color: "text-lime-600" },
+                  { val: 4, text: "轻度", color: "text-yellow-600" },
+                  { val: 6, text: "中度", color: "text-amber-600" },
+                  { val: 8, text: "重度", color: "text-orange-600" },
+                  { val: 10, text: "剧烈", color: "text-red-600" },
+                ].map((item) => (
+                  <div key={item.val} className="flex flex-col items-center w-8 cursor-pointer" onClick={() => setFormData({...formData, squatPainAfter: item.val})}>
+                    <span className={`mb-1 transition-colors ${formData.squatPainAfter === item.val ? item.color + " font-bold text-[13px]" : ""}`}>{item.val}</span>
+                    <span className={`whitespace-nowrap transition-all ${formData.squatPainAfter === item.val ? item.color + " font-bold" : "scale-90"}`}>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {preAssessment && (
-              <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-700 text-center">
-                理疗前分数为: <span className="font-bold">{preAssessment.squatPainBefore}</span> 分
+              <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-700 text-center shadow-sm border border-blue-100">
+                康养前痛感为: <span className="font-bold text-lg mx-1">{preAssessment.squatPainBefore}</span> 分，
+                {formData.squatPainAfter < preAssessment.squatPainBefore ? '有所缓解！🎉' : '请注意休息。'}
               </div>
             )}
           </div>
@@ -74,7 +176,7 @@ export function PostAssessment() {
         {step === 2 && (
           <div className="animate-in slide-in-from-right-4 fade-in duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-2">整体感觉</h2>
-            <p className="text-sm text-gray-500 mb-6">理疗结束后，您的整体感觉如何？</p>
+            <p className="text-sm text-gray-500 mb-6">康养结束后，您的整体感觉如何？</p>
             <div className="flex flex-col gap-3">
               {(['更舒服', '没变化', '更不适'] as const).map(opt => (
                 <button key={opt} onClick={() => setFormData({...formData, globalFeeling: opt})} className={clsx("p-4 rounded-xl text-left border-2 transition-all", formData.globalFeeling === opt ? "border-green-500 bg-green-50 text-green-700 font-bold" : "border-transparent bg-white shadow-sm text-gray-700")}>
@@ -88,7 +190,7 @@ export function PostAssessment() {
         {step === 3 && (
           <div className="animate-in slide-in-from-right-4 fade-in duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-2">强度感受</h2>
-            <p className="text-sm text-gray-500 mb-6">您觉得刚才的理疗强度怎么样？</p>
+            <p className="text-sm text-gray-500 mb-6">您觉得刚才的康养强度怎么样？</p>
             <div className="flex flex-col gap-3">
               {(['太轻', '刚好', '有点强'] as const).map(opt => (
                 <button key={opt} onClick={() => setFormData({...formData, intensityFeeling: opt})} className={clsx("p-4 rounded-xl text-left border-2 transition-all", formData.intensityFeeling === opt ? "border-green-500 bg-green-50 text-green-700 font-bold" : "border-transparent bg-white shadow-sm text-gray-700")}>

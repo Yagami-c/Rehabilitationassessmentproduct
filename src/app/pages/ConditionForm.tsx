@@ -253,7 +253,7 @@ export function ConditionForm() {
         {step === 1 && (
           <div className="animate-in slide-in-from-right-4 fade-in duration-300">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">基本信息</h2>
-            <p className="text-sm text-gray-500 mb-6">为了给您提供更准确的康复评估，我们需要了解您的基本情况</p>
+            <p className="text-sm text-gray-500 mb-6">为了给您提供更准确的康养评估，我们需要了解您的基本情况</p>
 
             <div className="space-y-6">
               <div className="space-y-2">
@@ -357,7 +357,7 @@ export function ConditionForm() {
         {step === 3 && (
           <div className="animate-in slide-in-from-right-4 fade-in duration-300">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">既往史</h2>
-            <p className="text-sm text-gray-500 mb-6">侧重康复相关，请勾选您曾有过的状况（可多选）</p>
+            <p className="text-sm text-gray-500 mb-6">侧重康养相关，请勾选您曾有过的状况（可多选）</p>
 
             <div className="flex flex-col gap-3">
               {[
@@ -387,24 +387,15 @@ export function ConditionForm() {
               ))}
 
               <div className={clsx(
-                "flex flex-col p-4 rounded-xl border-2 transition-all bg-white", 
+                "flex items-center p-4 rounded-xl border-2 transition-all bg-white text-left", 
                 pastHistory.includes('运动损伤手术史') ? "border-blue-500 bg-blue-50" : "border-transparent shadow-sm"
               )}>
                 <button onClick={() => togglePast('运动损伤手术史')} className="flex items-center text-left w-full">
                   <div className={clsx("w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors", pastHistory.includes('运动损伤手术史') ? "border-blue-600 bg-blue-600" : "border-gray-300 bg-white")}>
                     {pastHistory.includes('运动损伤手术史') && <Check size={14} className="text-white" />}
                   </div>
-                  <span className={clsx("font-medium text-sm", pastHistory.includes('运动损伤手术史') ? "text-blue-700" : "text-gray-700")}>运动损伤手术史（注明部位）</span>
+                  <span className={clsx("font-medium text-sm", pastHistory.includes('运动损伤手术史') ? "text-blue-700" : "text-gray-700")}>运动损伤手术史</span>
                 </button>
-                {pastHistory.includes('运动损伤手术史') && (
-                  <input 
-                    type="text" 
-                    value={sportsInjury}
-                    onChange={(e) => setSportsInjury(e.target.value)}
-                    placeholder="例如：左膝前交叉韧带重建..." 
-                    className="mt-3 ml-8 h-10 border-b border-gray-300 bg-transparent text-sm focus:outline-none focus:border-blue-500"
-                  />
-                )}
               </div>
             </div>
           </div>
@@ -414,7 +405,7 @@ export function ConditionForm() {
         {step === 4 && (
           <div className="animate-in slide-in-from-right-4 fade-in duration-300">
             <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">选择您的设备</h2>
-            <p className="text-sm text-gray-500 mb-8 text-center">我们将根据您选择的设备进行针对性康复评估</p>
+            <p className="text-sm text-gray-500 mb-8 text-center">我们将根据您选择的设备进行针对性康养评估</p>
 
             <div className="space-y-6">
               {/* Card 1: Joint Device */}
@@ -451,7 +442,7 @@ export function ConditionForm() {
 
       </div>
 
-      <div className="absolute bottom-0 w-full p-4 bg-white border-t border-gray-100 z-10 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)] pb-safe">
+      <div className="absolute bottom-0 w-full p-4 bg-white border-t border-gray-100 z-10 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)] pb-safe flex flex-col gap-3">
         <button 
           onClick={nextStep} 
           className="w-full h-12 bg-blue-600 text-white rounded-xl font-bold text-[16px] flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-blue-200"
@@ -466,6 +457,29 @@ export function ConditionForm() {
             </>
           )}
         </button>
+        {step < 4 && (
+          <button 
+            onClick={() => {
+              const currentPoints = useStore.getState().points || 0;
+              useStore.getState().setPoints(currentPoints + 50);
+              
+              if (step === 1) {
+                updateProfile({
+                  name: '匿名用户',
+                  gender: 'Male',
+                  age: 30,
+                  height: 170,
+                  weight: 65,
+                  bmi: 22.5
+                });
+              }
+              nextStep();
+            }}
+            className="w-full h-8 bg-transparent text-gray-400 font-medium text-[13px] flex items-center justify-center transition-all active:text-gray-600"
+          >
+            跳过此步 (送50积分)
+          </button>
+        )}
       </div>
     </div>
   );

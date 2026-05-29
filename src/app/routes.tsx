@@ -3,6 +3,7 @@ import { AppLayout } from './layout/AppLayout';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { ProfileForm } from './pages/ProfileForm';
+import { Disclaimer } from './pages/Disclaimer';
 import { ConditionForm } from './pages/ConditionForm';
 import { PostAssessment } from './pages/PostAssessment';
 import { MotionAssessment } from './pages/MotionAssessment';
@@ -11,6 +12,9 @@ import { Training } from './pages/Training';
 import { Device } from './pages/Device';
 import { Education } from './pages/Education';
 import { DeviceQuestionnaire } from './pages/DeviceQuestionnaire';
+import { ShareEdit } from './pages/ShareEdit';
+import { CameraEval } from './pages/CameraEval';
+import { Points } from './pages/Points';
 
 import { TrainingPlayback } from './pages/TrainingPlayback';
 import { PlanSettings } from './pages/PlanSettings';
@@ -32,12 +36,20 @@ export const router = createBrowserRouter([
     Component: Login,
   },
   {
+    path: '/disclaimer',
+    Component: Disclaimer,
+  },
+  {
     path: '/condition',
     Component: ConditionForm,
   },
   {
     path: '/post-assessment',
     Component: PostAssessment,
+  },
+  {
+    path: '/motion-assessment',
+    Component: MotionAssessment,
   },
   {
     path: '/assessment',
@@ -48,12 +60,24 @@ export const router = createBrowserRouter([
     Component: TrainingPlayback,
   },
   {
+    path: '/training/camera-eval',
+    Component: CameraEval,
+  },
+  {
+    path: '/points',
+    Component: Points,
+  },
+  {
     path: '/plan-settings',
     Component: PlanSettings,
   },
   {
     path: '/device',
     Component: Device,
+  },
+  {
+    path: '/share-edit',
+    Component: ShareEdit,
   },
   {
     path: '/device-questionnaire',

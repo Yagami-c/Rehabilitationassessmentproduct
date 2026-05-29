@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Play, Info, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Info, X, ChevronDown, ChevronUp, Lock, CheckCircle2, AlertCircle, Camera } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'motion/react';
+import { useStore } from '../store/useStore';
 
 export function Training() {
   const navigate = useNavigate();
+  const { points, isMediaPipeUnlocked, unlockMediaPipe } = useStore();
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<{name: string, img: string} | null>(null);
 
@@ -110,41 +112,41 @@ export function Training() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#F7F7F8] pb-28 font-sans overflow-y-auto">
+    <div className="flex flex-col h-full dark:bg-[#121212] bg-[#F7F7F8] pb-28 font-sans overflow-y-auto transition-colors">
       
       {/* Content Header Section */}
-      <div className="px-[20px] pt-[20px] pb-[20px] flex flex-col gap-[16px] bg-white border-b border-gray-100 shadow-sm relative z-40">
+      <div className="px-[20px] pt-[20px] pb-[20px] flex flex-col gap-[16px] dark:bg-[#1E1E1E] bg-white border-b dark:border-[#2C2C2C] border-gray-100 shadow-sm relative z-40 transition-colors">
         {/* 1. MAIN TITLE */}
-        <h1 className="text-[22px] font-bold text-[#1A1A2E]">快乐生活，“膝膝”相关</h1>
+        <h1 className="text-[22px] font-bold dark:text-[#F5F5F5] text-[#1A1A2E]">快乐生活，“膝膝”相关</h1>
         
         {/* 2. INTRODUCTION PARAGRAPH */}
-        <p className="text-[14px] font-normal text-[#555555] leading-[1.6]">
-          香港理工大学武汉研究院智慧康复与创新老龄健康转化研究中心副主任符少娥教授团队，深耕肌骨关节疼痛的科研与临床，特此分享膝关节保养要点，与您共筑健康。主动练，坚持养，拥抱“膝”悦人生！以下为一般性科普信息，供日常参考。
+        <p className="text-[14px] font-normal dark:text-[#9CA3AF] text-[#555555] leading-[1.6]">
+          香港理工大学武汉研究院智慧康养与创新老龄健康转化研究中心副主任符少娥教授团队，深耕肌骨关节疼痛的科研与临床，特此分享膝关节保养要点，与您共筑健康。主动练，坚持养，拥抱“膝”悦人生！以下为一般性科普信息，供日常参考。
         </p>
 
         {/* 3. DISCLAIMER BANNER */}
-        <div className="flex gap-2 bg-[#FFF8E1] border border-[#FFE082] rounded-[8px] p-[12px]">
+        <div className="flex gap-2 dark:bg-[#8D6E00]/10 bg-[#FFF8E1] border dark:border-[#8D6E00]/30 border-[#FFE082] rounded-[8px] p-[12px]">
           <div className="shrink-0 mt-0.5">
-            <Info size={14} className="text-[#8D6E00]" />
+            <Info size={14} className="dark:text-[#FBC02D] text-[#8D6E00]" />
           </div>
-          <p className="text-[12px] font-normal text-[#8D6E00] leading-relaxed">
+          <p className="text-[12px] font-normal dark:text-[#FBC02D] text-[#8D6E00] leading-relaxed">
             温馨提示：内容仅用于产品体验与科普参考，不构成医疗建议或诊断依据；请根据自身情况选择合适方式，如有持续不适请咨询专业人士。
           </p>
         </div>
 
         {/* 4 & 5. SECTION TITLE AND SUBTITLE */}
         <div className="flex flex-col gap-[4px]">
-          <h2 className="text-[20px] font-bold text-[#1A1A2E]">练出“强壮膝”</h2>
+          <h2 className="text-[20px] font-bold dark:text-[#F5F5F5] text-[#1A1A2E]">练出“强壮膝”</h2>
           <h3 className="text-[16px] font-medium text-[#3A7BD5]">五维主动防护体系</h3>
         </div>
 
         {/* 6. SUMMARY PARAGRAPH */}
-        <p className="text-[14px] font-normal text-[#555555] leading-[1.6]">
+        <p className="text-[14px] font-normal dark:text-[#9CA3AF] text-[#555555] leading-[1.6]">
           膝盖的耐用，源于科学养护。我们为你构建了五个关键维度，通过“稳定、激活、支撑、推进、调节”，系统强化膝关节的每一环。每天跟练，用主动运动，换取长久灵活。
         </p>
 
         {/* 7. FIVE DIMENSION LIST */}
-        <ul className="text-[14px] font-normal text-[#333333] leading-[1.8] space-y-2 list-none">
+        <ul className="text-[14px] font-normal dark:text-[#E5E7EB] text-[#333333] leading-[1.8] space-y-2 list-none">
           <li className="flex items-start"><span className="mr-1">·</span> <div><span className="font-bold">稳定之基</span>：建立动态核心稳定，提升运动中保护膝盖的抗旋转与协调能力。</div></li>
           <li className="flex items-start"><span className="mr-1">·</span> <div><span className="font-bold">激活之钥</span>：激活臀部肌肉，稳定骨盆，从根源改善力线，预防膝痛。</div></li>
           <li className="flex items-start"><span className="mr-1">·</span> <div><span className="font-bold">支撑之力</span>：强化日常功能性力量，直接提升坐下、站起、上下楼时的轻松与稳健。</div></li>
@@ -159,10 +161,10 @@ export function Training() {
           {exercises.map((section) => (
             <div key={section.id} id={section.id} className="scroll-mt-8">
               <div className="mb-4">
-                <h3 className="text-[18px] font-extrabold text-gray-900">{section.title}</h3>
+                <h3 className="text-[18px] font-extrabold dark:text-[#F5F5F5] text-gray-900">{section.title}</h3>
                 {section.subtitle && (
-                  <div className="bg-gray-100/80 p-3 rounded-xl mt-2 mb-4">
-                    <p className="text-[13px] text-gray-600 leading-relaxed font-medium">
+                  <div className="dark:bg-[#2C2C2C] bg-gray-100/80 p-3 rounded-xl mt-2 mb-4">
+                    <p className="text-[13px] dark:text-[#9CA3AF] text-gray-600 leading-relaxed font-medium">
                       {section.subtitle}
                     </p>
                   </div>
@@ -174,7 +176,7 @@ export function Training() {
                   <div 
                     key={item.id}
                     onClick={(e) => toggleExpand(item.id, e)}
-                    className="bg-white rounded-[16px] p-3 shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-blue-50 cursor-pointer active:scale-[0.99] transition-all"
+                    className="dark:bg-[#1E1E1E] bg-white rounded-[16px] p-3 shadow-sm border dark:border-[#2C2C2C] border-gray-100 cursor-pointer active:scale-[0.99] transition-all"
                   >
                     <div className="flex gap-3">
                       {/* GIF Placeholder */}
@@ -187,7 +189,7 @@ export function Training() {
                       >
                         <ImageWithFallback src={item.img} alt={item.name} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                          <Play size={24} className="text-white fill-white opacity-90" />
+                          <Play size={24} className="text-white fill-current opacity-90" />
                         </div>
                         {item.note && (
                           <div className="absolute bottom-0 left-0 w-full bg-black/50 text-white text-[9px] text-center py-0.5 font-medium">
@@ -199,17 +201,17 @@ export function Training() {
                       {/* Content */}
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
                         <div className="flex justify-between items-start">
-                          <h4 className="font-bold text-[15px] text-gray-900 truncate">{item.name}</h4>
-                          <button className="text-gray-400 p-1 -mr-1">
+                          <h4 className="font-bold text-[15px] dark:text-[#F5F5F5] text-[#1A1A1A] truncate">{item.name}</h4>
+                          <button className="text-[#9CA3AF] p-1 -mr-1">
                             {expandedCard === item.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                           </button>
                         </div>
                         
                         <div className="mt-1">
-                          <p className="text-[13px] text-gray-500 leading-relaxed">
+                          <p className="text-[13px] dark:text-[#9CA3AF] text-[#6B7280] leading-relaxed">
                             {item.desc.includes(' · ') ? (
                               <>
-                                <span className="font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded mr-1">
+                                <span className="font-bold dark:text-blue-400 dark:bg-blue-500/10 text-[#2C7CFF] bg-blue-50 px-1.5 py-0.5 rounded mr-1">
                                   {item.desc.split(' · ')[0]}
                                 </span>
                                 {item.desc.split(' · ')[1]}
@@ -266,6 +268,106 @@ export function Training() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* MediaPipe Unlock Section */}
+      <div className="px-5 pb-8">
+        <h2 className="text-[18px] font-bold text-gray-900 mb-4 mt-6">实时动作评估</h2>
+        
+        <div className={clsx(
+          "relative overflow-hidden rounded-2xl border transition-all",
+          isMediaPipeUnlocked 
+            ? "bg-white border-blue-200 shadow-lg shadow-blue-500/10" 
+            : "bg-gray-50 border-gray-200"
+        )}>
+          {/* Background Video Preview (blurred if locked) */}
+          <div className="h-40 w-full relative bg-gray-900 overflow-hidden">
+            <ImageWithFallback 
+              src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=800&h=400" 
+              alt="MediaPipe Demo"
+              className={clsx(
+                "w-full h-full object-cover transition-all",
+                !isMediaPipeUnlocked ? "opacity-40 blur-[2px]" : "opacity-80"
+              )}
+            />
+            {/* Skeleton overlay */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-50">
+              <svg viewBox="0 0 100 100" className="w-32 h-32 stroke-blue-400 stroke-2 fill-blue-500">
+                <circle cx="50" cy="20" r="4" />
+                <line x1="50" y1="24" x2="50" y2="45" />
+                <line x1="30" y1="30" x2="70" y2="30" />
+                <line x1="50" y1="45" x2="40" y2="70" />
+                <line x1="50" y1="45" x2="60" y2="70" />
+                <circle cx="30" cy="30" r="2" />
+                <circle cx="70" cy="30" r="2" />
+                <circle cx="40" cy="70" r="2" />
+                <circle cx="60" cy="70" r="2" />
+              </svg>
+            </div>
+            
+            {!isMediaPipeUnlocked && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-[1px]">
+                <div className="bg-black/60 rounded-full p-3 mb-2">
+                  <Lock size={24} className="text-white" />
+                </div>
+                <p className="text-white font-medium shadow-sm">需 200 积分解锁</p>
+                <p className="text-white/80 text-[12px] mt-1">解锁后永久使用</p>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                  <Camera size={18} className="text-blue-500" />
+                  AI视觉评估
+                  {isMediaPipeUnlocked && <span className="bg-blue-100 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-medium">已解锁</span>}
+                </h3>
+                <p className="text-[13px] text-gray-500 mt-1">仅需手机摄像头，实时纠正您的康养动作，并生成评分与报告。</p>
+              </div>
+            </div>
+
+            {!isMediaPipeUnlocked ? (
+              <div className="mt-4">
+                <div className="flex justify-between items-center mb-3 text-[13px]">
+                  <span className="text-gray-600">当前积分：<span className="font-bold text-blue-600">{points}</span></span>
+                  {points < 200 && (
+                    <span className="text-red-500 flex items-center gap-1">
+                      <AlertCircle size={12} /> 积分不足
+                    </span>
+                  )}
+                </div>
+                
+                <button
+                  onClick={() => {
+                    if (points >= 200) {
+                      unlockMediaPipe();
+                    } else {
+                      // Navigate to points explanation or show toast
+                      alert('积分不足，可通过每日签到、完成康养计划或完善资料获取积分。');
+                    }
+                  }}
+                  className={clsx(
+                    "w-full h-11 rounded-xl font-medium text-[15px] transition-all flex items-center justify-center gap-2",
+                    points >= 200 
+                      ? "bg-blue-600 text-white active:scale-[0.98] shadow-md shadow-blue-500/20" 
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  )}
+                >
+                  <Lock size={16} /> 消耗 200 积分解锁
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/training/camera-eval')}
+                className="w-full h-11 mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium text-[15px] transition-all active:scale-[0.98] shadow-md shadow-blue-500/20 flex items-center justify-center gap-2"
+              >
+                <Camera size={18} /> 开始实时评估
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
       
     </div>
   );

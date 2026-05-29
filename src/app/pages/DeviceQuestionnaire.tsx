@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { ChevronLeft, AlertCircle, CheckCircle2, Info, Smile, Meh, Frown, Annoyed, Angry } from 'lucide-react';
+import { ChevronLeft, AlertCircle, CheckCircle2, Info, Smile, Meh, Frown, Annoyed, Angry, Play } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Slider } from '../components/ui/slider';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
@@ -25,6 +25,8 @@ export function DeviceQuestionnaire() {
 
   // Step 4: Squat Pain
   const [squatPain, setSquatPain] = useState<number>(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [painTriggers, setPainTriggers] = useState<string[]>([]);
   const painTriggerOptions = ["上下楼梯", "久坐后站起", "跑步/运动", "没有明显诱因"];
 
@@ -197,7 +199,50 @@ export function DeviceQuestionnaire() {
         {step === 4 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-6">下蹲疼痛评分</h2>
-            <p className="text-gray-600 mb-6">当你下蹲时，膝盖不适程度是？（0-10分）</p>
+            
+            <div className="bg-blue-50/50 rounded-2xl p-5 mb-8 border border-blue-100 flex flex-col items-center relative overflow-hidden">
+              <div className="text-center mb-4 relative z-10">
+                <p className="text-[13px] text-blue-600 font-medium mb-1">在开始正式评估前，请先...</p>
+                <h3 className="text-[18px] font-bold text-gray-900">试着做一次标准的下蹲</h3>
+              </div>
+
+              {/* Circular Video Player */}
+              <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg z-10 bg-gray-100 flex items-center justify-center">
+                <video 
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  src="https://www.w3schools.com/html/mov_bbb.mp4"
+                  playsInline
+                  muted
+                  loop
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                />
+                {!isPlaying && (
+                  <button 
+                    onClick={() => {
+                      if (videoRef.current) {
+                        const playPromise = videoRef.current.play();
+                        if (playPromise !== undefined) {
+                          playPromise.catch(error => {
+                            console.log("Playback prevented:", error);
+                          });
+                        }
+                      }
+                      setIsPlaying(true);
+                    }}
+                    className="absolute inset-0 m-auto w-14 h-14 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-transform active:scale-95"
+                  >
+                    <Play size={28} className="ml-1 fill-current" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Background decoration */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-tr from-blue-200/40 to-blue-100/40 rounded-full blur-2xl z-0 pointer-events-none" />
+            </div>
+
+            <p className="text-gray-900 font-bold mb-4 text-[16px]">下蹲时，膝盖不适程度是？（0-10分）</p>
             
             <div className="bg-white pt-8 pb-6 px-5 rounded-2xl border border-gray-100 flex flex-col items-center mb-8 shadow-sm">
               {(() => {
@@ -288,7 +333,7 @@ export function DeviceQuestionnaire() {
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="text-center mb-8 mt-2">
               <h2 className="text-[22px] font-extrabold text-gray-900 mb-2">你更接近哪种体型？</h2>
-              <p className="text-gray-500 text-[14px]">请选择最符合你的体型</p>
+              <p className="text-gray-500 text-[14px]">请选择最符合你的��型</p>
             </div>
 
             <div className="flex gap-2 justify-between">

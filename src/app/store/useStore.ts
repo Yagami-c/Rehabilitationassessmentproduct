@@ -34,20 +34,35 @@ export type PostAssessmentData = {
 
 export type AppState = {
   isLoggedIn: boolean;
+  isDarkMode: boolean;
+  isDeviceConnected: boolean;
+  connectedDeviceName: string;
+  points: number;
+  isMediaPipeUnlocked: boolean;
   profile: UserProfile | null;
   preAssessment: PreAssessmentData | null;
   postAssessment: PostAssessmentData | null;
   login: () => void;
   logout: () => void;
+  toggleDarkMode: () => void;
+  connectDevice: (name: string) => void;
+  disconnectDevice: () => void;
   updateProfile: (profile: Partial<UserProfile>) => void;
+  setPoints: (points: number) => void;
+  unlockMediaPipe: () => boolean;
   setPreAssessment: (data: Partial<PreAssessmentData>) => void;
   setPostAssessment: (data: Partial<PostAssessmentData>) => void;
   calculatePreAssessmentLevel: () => number;
   calculatePostAssessmentLevel: () => { nextLevel: number | string, advice: string };
 };
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
   isLoggedIn: false,
+  isDarkMode: false,
+  isDeviceConnected: false,
+  connectedDeviceName: '',
+  points: 250, // default test points
+  isMediaPipeUnlocked: false,
   profile: {
     name: '张三',
     gender: 'Male',
@@ -61,6 +76,18 @@ export const useStore = create<AppState>((set) => ({
   postAssessment: null,
   login: () => set({ isLoggedIn: true }),
   logout: () => set({ isLoggedIn: false }),
+  toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
+  connectDevice: (name) => set({ isDeviceConnected: true, connectedDeviceName: name }),
+  disconnectDevice: () => set({ isDeviceConnected: false, connectedDeviceName: '' }),
+  setPoints: (points) => set({ points }),
+  unlockMediaPipe: () => {
+    const { points } = get();
+    if (points >= 200) {
+      set({ points: points - 200, isMediaPipeUnlocked: true });
+      return true;
+    }
+    return false;
+  },
   updateProfile: (newProfile) => 
     set((state) => ({
       profile: state.profile ? { ...state.profile, ...newProfile } : null
