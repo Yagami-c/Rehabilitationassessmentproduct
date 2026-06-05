@@ -174,22 +174,22 @@ export function Login() {
                 <p className="font-bold mb-2">协议编号：HEC-USER-2024-01 | 最后更新：2026年6月</p>
                 
                 <h5 className="font-bold text-gray-800 mt-4 mb-1">一、协议范围与接受</h5>
-                <p className="mb-1">1.1 本协议是您（下称“用户”）与【光年康复】（下称“我们”或“平台”）之间关于使用“光年康复”App及关联硬件设备（下称“本产品”）的法律协议。</p>
-                <p className="mb-1">1.2 您在注册、使用本产品任何功能前应仔细阅读并同意本协议、《运动康复免责声明》及《隐私政策》。若您不同意任一文件，请立即停止使用。</p>
+                <p className="mb-1">1.1 本协议是您（下称“用户”）与【光年康养】（下称“我们”或“平台”）之间关于使用“光年康养”App及关联硬件设备（下称“本产品”）的法律协议。</p>
+                <p className="mb-1">1.2 您在注册、使用本产品任何功能前应仔细阅读并同意本协议、《运动康养免责声明》及《隐私政策》。若您不同意任一文件，请立即停止使用。</p>
 
                 <h5 className="font-bold text-gray-800 mt-4 mb-1">二、用户资格与注册</h5>
                 <p className="mb-1">2.1 您应具有完全民事行为能力。未满18周岁的用户仅在特定功能下（见《免责声明》）经监护人同意并全程陪同方可使用。</p>
                 <p className="mb-1">2.2 您保证注册信息真实、准确，并在变更后及时更新。如因信息不实导致任何后果，由您自行承担。</p>
 
                 <h5 className="font-bold text-gray-800 mt-4 mb-1">三、服务内容与使用规则</h5>
-                <p className="mb-1"><strong className="text-gray-800">3.1 服务性质：</strong>我们提供运动动作捕捉分析、AI训练方案推荐、运动数据记录及远程康复指导信息撮合等技术服务。<strong className="text-red-500">本产品不提供任何医疗诊断、治疗或处方，不建立医患关系。</strong></p>
+                <p className="mb-1"><strong className="text-gray-800">3.1 服务性质：</strong>我们提供运动动作捕捉分析、AI训练方案推荐、运动数据记录及远程康养指导信息撮合等技术服务。<strong className="text-red-500">本产品不提供任何医疗诊断、治疗或处方，不建立医患关系。</strong></p>
                 <p className="mb-1 mt-2"><strong className="text-gray-800">3.2 AI推荐与方案调整：</strong></p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>AI算法根据您输入的评估数据及传感器采集信息生成训练推荐，该推荐仅为技术辅助，不构成个体化医疗意见。您应在专业人士指导下结合自身感受决定是否执行。</li>
                   <li>开启“智能适应”模式后，系统可自动微调训练参数。由于传感器及算法局限，调整可能存在误差，<strong className="text-red-500">若您感到不适须立即停止并切换手动模式或暂停训练。</strong></li>
-                  <li>您始终有权手动设定所有参数，或授权平台认证的持牌康复师远程为您调整。康复师的临床判断责任由其独立承担，平台仅提供技术通道。</li>
+                  <li>您始终有权手动设定所有参数，或授权平台认证的持牌康养师远程为您调整。康养师的临床判断责任由其独立承担，平台仅提供技术通道。</li>
                 </ul>
-                <p className="mb-1 mt-2"><strong className="text-gray-800">3.3 第三方服务：</strong>您通过平台预约的康复指导、问诊等服务，由持有相应执业资质的独立专业人士提供。平台仅是信息撮合与技术连接方，不参与医疗决策，不对此类服务的质量或结果负责。相关纠纷由您与服务方自行解决。</p>
+                <p className="mb-1 mt-2"><strong className="text-gray-800">3.3 第三方服务：</strong>您通过平台预约的康养指导、问诊等服务，由持有相应执业资质的独立专业人士提供。平台仅是信息撮合与技术连接方，不参与医疗决策，不对此类服务的质量或结果负责。相关纠纷由您与服务方自行解决。</p>
                 <p className="mb-1 mt-2"><strong className="text-gray-800">3.4 地域限制：</strong>本产品仅供中国大陆地区（不含港澳台）用户使用。远程医疗类服务严格限制于中国大陆境内，您需确保使用该服务时您与提供方均处于境内。平台有权校验地理位置，若不符合规定可中止服务。</p>
                 <p className="mb-1 mt-2">3.5 您不得利用本产品从事违法活动、干扰系统运行或侵犯他人权益。我们保留中止服务的权利。</p>
 
@@ -198,7 +198,7 @@ export function Login() {
                 <p className="mb-1">4.2 您提供的训练反馈、评价等在匿名化处理后可用于产品改进。</p>
 
                 <h5 className="font-bold text-gray-800 mt-4 mb-1">五、免责与责任限制</h5>
-                <p className="mb-1">5.1 您确认已阅读并同意《运动康复免责声明》。在医疗健康方面，您须承诺已咨询专业医生并获准使用。除非因我们故意或重大过失，否则因您未遵守禁忌、自行训练或延误就医造成的损害，我们不承担责任。</p>
+                <p className="mb-1">5.1 您确认已阅读并同意《运动康养免责声明》。在医疗健康方面，您须承诺已咨询专业医生并获准使用。除非因我们故意或重大过失，否则因您未遵守禁忌、自行训练或延误就医造成的损害，我们不��担责任。</p>
                 <p className="mb-1">5.2 由于技术条件、网络环境等不可控因素，服务可能发生中断或错误，我们将尽力修复，但不对由此产生的间接损失承担责任。</p>
 
                 <h5 className="font-bold text-gray-800 mt-4 mb-1">六、协议修改与终止</h5>
@@ -221,8 +221,8 @@ export function Login() {
                 <ul className="list-disc pl-4 space-y-1">
                   <li><strong className="text-gray-800">蓝牙</strong>：连接光年·环膝硬件，获取关节角度、加速度。仅配对使用，不扫描周边设备，数据加密传输。</li>
                   <li><strong className="text-gray-800">摄像头</strong>：动作评估时采集人体运动画面，实时提取骨架点。原始视频<strong className="text-blue-600">不存储、不上传</strong>，仅上传脱敏的骨架坐标序列。</li>
-                  <li><strong className="text-gray-800">麦克风</strong>：语音反馈、AI客服。仅主动触发时开启，不后台录音，处理完即删除。</li>
-                  <li><strong className="text-gray-800">大致位置</strong>：线下康复点推荐、远程服务地域校验。仅获取城市级位置，不用于追踪或画像。</li>
+                  <li><strong className="text-gray-800">麦克风</strong>：语音反馈。仅主动触发时开启，不后台录音，处理完即删除。</li>
+                  <li><strong className="text-gray-800">大致��置</strong>：线下康养点推荐、远程服务地域校验。仅获取城市级位置，不用于追踪或画像。</li>
                 </ul>
                 <p className="mb-1 mt-2"><strong className="text-gray-800">（三）第三方SDK：</strong> 我们集成经安全评估的SDK（如语音识别、支付、崩溃统计），可能收集非敏感的设备标识、操作日志等，不获取健康信息。</p>
 
@@ -234,7 +234,7 @@ export function Login() {
 
                 <h5 className="font-bold text-gray-800 mt-4 mb-1">四、信息的共享与使用</h5>
                 <ul className="list-disc pl-4 space-y-1">
-                  <li>未经您单独同意，我们不会将敏感信息共享第三方，除非是向为您提供远程服务的持牌康复师传输必要数据，或法律要求；</li>
+                  <li>未经您单独同意，我们不会将敏感信息共享第三方，除非是向为您提供远程服务的持牌康养师传输必要数据，或法律要求；</li>
                   <li>匿名化统计信息可能用于科研，无法识别您的身份。</li>
                 </ul>
 

@@ -160,7 +160,7 @@ export function ConditionForm() {
       if (pastHistory.length === 0) return alert("请至少选择一项既往史");
       setStep(4);
     } else if (step === 4) {
-      if (!selectedDevice) return alert("请选择设备");
+      if (!selectedDevice) return alert("请选择设备，或点击下方跳过");
       submitForm();
     }
   };
@@ -429,13 +429,20 @@ export function ConditionForm() {
               <div 
                 className="w-full rounded-2xl relative overflow-hidden opacity-70 cursor-not-allowed"
               >
-                <ImageWithFallback src={ledDeviceImg} alt="LED治疗仪" className="w-full h-auto object-cover grayscale-[0.3]" />
+                <ImageWithFallback src={ledDeviceImg} alt="LED康养仪" className="w-full h-auto object-cover grayscale-[0.3]" />
                 
                 <div className="absolute top-4 right-4 py-1.5 px-3 bg-gray-900/60 backdrop-blur-sm text-white rounded-full text-xs font-medium flex items-center gap-1.5">
                   <Lock size={12} />
                   敬请期待
                 </div>
               </div>
+
+              <button 
+                onClick={() => submitForm()}
+                className="w-full h-10 mt-2 bg-transparent text-gray-400 font-medium text-[13px] flex items-center justify-center transition-all active:text-gray-600"
+              >
+                暂无设备，跳过
+              </button>
             </div>
           </div>
         )}

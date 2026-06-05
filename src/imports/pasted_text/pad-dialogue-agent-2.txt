@@ -1,0 +1,789 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import tkinter as tk
+from tkinter import ttk, BooleanVar, StringVar
+from datetime import date
+import json
+import os
+
+# ---------- 模式参数库 ----------
+PAD_MODES = {
+    "L1": {"pressure": 100, "application": 15, "rest": 10, "cycles": 10,
+           "user_explain": "最低强度，适合非常敏感的膝盖。",
+           "detail_explain": "压力很低，适合初次使用或完全无不适者。",
+           "daily_advice": "每天1次，每次5分钟，使用后观察变化。"},
+    "L2": {"pressure": 125, "application": 15, "rest": 10, "cycles": 10,
+           "user_explain": "中等偏低强度，温和且有效。",
+           "detail_explain": "既能提供松动刺激，又相对温和。",
+           "daily_advice": "每天1-2次，每次5-10分钟，使用后观察变化。"},
+    "L3": {"pressure": 125, "application": 30, "rest": 10, "cycles": 5,
+           "user_explain": "中等强度，适当延长作用时间。",
+           "detail_explain": "在保持中等负压的基础上延长施加时间至30秒。",
+           "daily_advice": "每天1-2次，每次约10分钟。"},
+    "H1": {"pressure": 150, "application": 90, "rest": 10, "cycles": 3,
+           "user_explain": "高压短周期，适合紧张较强的情况。",
+           "detail_explain": "较高负压、较短作用时间。",
+           "daily_advice": "每天1次，每次约5分钟。"},
+    "H2": {"pressure": 150, "application": 180, "rest": 10, "cycles": 3,
+           "user_explain": "高压中长持续，适合适应性好的膝盖。",
+           "detail_explain": "中等高压、持续180秒。",
+           "daily_advice": "每天1次，每次约10分钟。"},
+    "H3": {"pressure": 200, "application": 180, "rest": 10, "cycles": 3,
+           "user_explain": "最强高压强化模式。",
+           "detail_explain": "200 mmHg高压，持久作用。",
+           "daily_advice": "每天1次，每次约10分钟，使用前后可冰敷。"},
+}
+
+class UserSession:
+    SESSION_FILE = "pad_session.json"
+
+    def __init__(self):
+        self.data = None
+        self.load()
+
+    def load(self):
+        if os.path.exists(self.SESSION_FILE):
+            with open(self.SESSION_FILE, "r", encoding="utf-8") as f:
+                self.data = json.load(f)
+            if "assessments" not in self.data:
+                self.data["assessments"] = []
+            if "last_assessment_day" not in self.data:
+                self.data["last_assessment_day"] = 0
+            self.save()
+        else:
+            self.data = None
+
+    def save(self):
+        with open(self.SESSION_FILE, "w", encoding="utf-8") as f:
+            json.dump(self.data, f, indent=2, ensure_ascii=False)
+
+    def new_session(self, initial_data):
+        self.data = {
+            "start_date": date.today().isoformat(),
+            "initial": initial_data,
+            "daily_records": [],
+            "assessments": [],
+            "last_assessment_day": 0
+        }
+        self.save()
+
+    def add_daily_record(self, record):
+        self.data["daily_records"].append(record)
+        self.save()
+
+    def add_assessment(self, assessment_data):
+        self.data["assessments"].append(assessment_data)
+        self.data["last_assessment_day"] = len(self.data["daily_records"])
+        self.save()
+
+    def get_current_mode_history(self):
+        if self.data["daily_records"]:
+            last = self.data["daily_records"][-1]
+            return last.get("mode", "L2")
+        else:
+            level = self.data["initial"]["recommended_level"]
+            mode_map = {1: "L1", 2: "L2", 3: "L3", 4: "H1", 5: "H2", 6: "H3"}
+            return mode_map.get(level, "L2")
+
+    def get_last_feedback_for_adjustment(self):
+        if not self.data["daily_records"]:
+            return None
+        last = self.data["daily_records"][-1]
+        return {
+            "global_effect": last.get("global_effect"),
+            "intensity_feel": last.get("intensity_feel"),
+            "adverse_flags": last.get("adverse_flags", [])
+        }
+
+    def is_new_user(self):
+        return self.data is None
+
+    def need_periodic_assessment(self):
+        if not self.data:
+            return False
+        completed = len(self.data["daily_records"])
+        last_assess = self.data.get("last_assessment_day", 0)
+        if completed >= 7 and (completed - last_assess >= 7 or last_assess == 0):
+            return True
+        return False
+
+    def get_initial_discomfort(self):
+        init = self.data["initial"]
+        return init["worst_action"], init["worst_action_level"]
+
+    def get_cycle_baseline(self):
+        assessments = self.data.get("assessments", [])
+        if not assessments:
+            return self.data["initial"]["worst_action"], self.data["initial"]["worst_action_level"]
+        else:
+            last = assessments[-1]
+            worst_action = last.get("worst_action_now", self.data["initial"]["worst_action"])
+            level = last.get("current_level", self.data["initial"]["worst_action_level"])
+            return worst_action, level
+
+
+class DialogueAgent:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("PAD 智能对话助手 - 持续康复版")
+        self.root.geometry("600x750")
+        self.root.resizable(False, False)
+
+        self.session = UserSession()
+
+        # 评估数据（新会话）
+        self.level = 2
+        self.squat_before = 0
+        self.stiffness_desc = ""
+        self.body_type_desc = ""
+        self.first_time = False
+        self.pain_triggers = []
+        self.worst_action = ""
+        self.worst_action_level = 0
+
+        # 使用后数据
+        self.squat_after = None
+        self.global_effect = None
+        self.intensity_feel = None
+        self.adverse_flags = []
+
+        self.state = "start"
+        self.temp_data = {}
+
+        self.create_widgets()
+
+        if self.session.is_new_user():
+            self.agent_say("你好！我是 PAD 智能评估助手（持续康复版）。")
+            self.agent_say("我们将首先进行初始评估，确定你的膝盖状况，并推荐第一天的使用模式。")
+            self.start_redflag()
+        else:
+            if self.session.need_periodic_assessment():
+                self.agent_say(f"你已经完成了 {len(self.session.data['daily_records'])} 天的使用。")
+                self.agent_say("现在需要进行7天综合评估，请回答以下问题。")
+                self.start_periodic_assessment()
+            else:
+                day = len(self.session.data["daily_records"]) + 1
+                self.agent_say(f"欢迎回来！这是你的第 {day} 天使用。")
+                self.agent_say("我们将根据你昨天的反馈，智能调整今天的模式。")
+                self.start_daily_use()
+
+    # -------------------- 界面组件 --------------------
+    def create_widgets(self):
+        self.chat_frame = tk.Frame(self.root)
+        self.chat_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.canvas = tk.Canvas(self.chat_frame, highlightthickness=0)
+        self.scrollbar = ttk.Scrollbar(self.chat_frame, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = ttk.Frame(self.canvas)
+
+        self.scrollable_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+
+        self.input_frame = ttk.Frame(self.root)
+        self.input_frame.pack(fill="x", padx=10, pady=10)
+
+    def agent_say(self, text):
+        msg_frame = ttk.Frame(self.scrollable_frame)
+        msg_frame.pack(fill="x", pady=5)
+        bubble = tk.Label(msg_frame, text=text, wraplength=450, justify="left",
+                          bg="#DCF8C6", font=("Arial", 10), padx=10, pady=5)
+        bubble.pack(anchor="w")
+        self.scroll_to_bottom()
+
+    def scroll_to_bottom(self):
+        self.canvas.yview_moveto(1.0)
+        self.root.update_idletasks()
+
+    def clear_input_area(self):
+        for widget in self.input_frame.winfo_children():
+            widget.destroy()
+
+    def disable_input(self):
+        self.clear_input_area()
+        ttk.Button(self.input_frame, text="关闭", command=self.root.destroy).pack()
+
+    # ---------- 初始评估流程 ----------
+    def start_redflag(self):
+        self.state = "redflag"
+        self.agent_say("第一步：安全筛查（红旗征）\n以下情况你是否符合？（可多选）")
+        flags = ["最近2周内有明显受伤", "膝盖明显肿胀", "有伤口或皮肤问题", "医生建议避免使用类似设备", "以上都没有"]
+        self.temp_data["flags"] = {f: BooleanVar() for f in flags}
+        self.clear_input_area()
+        for f in flags:
+            cb = ttk.Checkbutton(self.input_frame, text=f, variable=self.temp_data["flags"][f])
+            cb.pack(anchor="w", pady=2)
+        btn = ttk.Button(self.input_frame, text="提交", command=self.process_redflag)
+        btn.pack(pady=10)
+
+    def process_redflag(self):
+        selected = [f for f, var in self.temp_data["flags"].items() if var.get()]
+        if not selected:
+            self.agent_say("请至少选择一项。")
+            return
+        if "以上都没有" in selected and len(selected) > 1:
+            self.agent_say("不能同时选择“以上都没有”和其他项。请重新选择。")
+            return
+        has_risk = any(f != "以上都没有" for f in selected)
+        if has_risk:
+            self.agent_say("⚠️ 存在红旗征，暂时不推荐使用PAD，建议咨询专业人员。评估结束。")
+            self.disable_input()
+        else:
+            self.agent_say("✅ 红旗征通过，可以继续。")
+            self.start_stiffness()
+
+    def start_stiffness(self):
+        self.state = "stiffness"
+        self.agent_say("第二步：僵硬/紧张程度评估\n你是否感觉膝盖有点紧或活动不开？")
+        self.clear_input_area()
+        options = [
+            ("没有 (0) → 初始等级 L2", 0),
+            ("有一点 (1) → 初始等级 L3", 1),
+            ("明显 (2) → 初始等级 L4", 2)
+        ]
+        for text, val in options:
+            btn = ttk.Button(self.input_frame, text=text, command=lambda v=val: self.select_stiffness(v))
+            btn.pack(fill="x", pady=2)
+
+    def select_stiffness(self, val):
+        if val == 0:
+            self.level = 2
+            self.stiffness_desc = "没有"
+        elif val == 1:
+            self.level = 3
+            self.stiffness_desc = "有一点"
+        else:
+            self.level = 4
+            self.stiffness_desc = "明显"
+        self.agent_say(f"您选择：{self.stiffness_desc}僵硬。初始等级 = L{self.level}")
+        self.start_pain_score()
+
+    def start_pain_score(self):
+        self.state = "pain_score"
+        self.agent_say("第三步：下蹲疼痛评分\n当你下蹲时，膝盖不适程度是多少？（0-10分）")
+        self.clear_input_area()
+        self.pain_slider = tk.Scale(self.input_frame, from_=0, to=10, orient="horizontal", length=300)
+        self.pain_slider.pack(pady=10)
+        btn = ttk.Button(self.input_frame, text="确认", command=self.process_pain_score)
+        btn.pack()
+
+    def process_pain_score(self):
+        self.squat_before = self.pain_slider.get()
+        old = self.level
+        if self.squat_before >= 7:
+            self.level = max(1, old - 1)
+            reason = f"等级 -1"
+        elif 4 <= self.squat_before <= 6:
+            reason = f"等级 不变"
+        else:
+            self.level = min(6, old + 1)
+            reason = f"等级 +1"
+        self.agent_say(f"疼痛 {self.squat_before} 分 → {reason}。等级变化：{old} → {self.level}")
+        self.start_worst_action()
+
+    def start_worst_action(self):
+        self.state = "worst_action"
+        self.agent_say("第四步：请回想过去一周，最让你膝盖不舒服的动作是什么？")
+        self.clear_input_area()
+        actions = ["下楼梯", "上楼梯", "下蹲", "久坐后站起", "跑步/运动", "其他"]
+        self.temp_data["worst_action_var"] = StringVar()
+        for act in actions:
+            rb = ttk.Radiobutton(self.input_frame, text=act, variable=self.temp_data["worst_action_var"], value=act)
+            rb.pack(anchor="w", pady=2)
+        ttk.Button(self.input_frame, text="下一步", command=self.process_worst_action).pack(pady=10)
+
+    def process_worst_action(self):
+        act = self.temp_data["worst_action_var"].get()
+        if not act:
+            self.agent_say("请选择一个动作。")
+            return
+        self.worst_action = act
+        self.agent_say(f"你最不适的动作是：{self.worst_action}")
+        self.start_worst_action_level()
+
+    def start_worst_action_level(self):
+        self.state = "worst_action_level"
+        self.agent_say(f"做“{self.worst_action}”这个动作时，不适程度如何？\n0=无不适，1=轻微，2=中等，3=较重，4=非常严重")
+        self.clear_input_area()
+        self.level_slider = tk.Scale(self.input_frame, from_=0, to=4, orient="horizontal", length=300, resolution=1)
+        self.level_slider.pack(pady=10)
+        ttk.Button(self.input_frame, text="确认", command=self.process_worst_action_level).pack()
+
+    def process_worst_action_level(self):
+        self.worst_action_level = self.level_slider.get()
+        self.agent_say(f"不适程度记录为：{self.worst_action_level}/4")
+        self.start_pain_other()
+
+    def start_pain_other(self):
+        self.state = "pain_other"
+        self.agent_say("记录其他诱因（多选，不影响算法）：\n以下哪些动作会让你膝盖不舒服？（可多选）")
+        pain_opts = ["上下楼梯", "久坐后站起", "跑步/运动", "没有明显诱因"]
+        self.temp_data["pain_others"] = {opt: BooleanVar() for opt in pain_opts}
+        self.clear_input_area()
+        for opt in pain_opts:
+            cb = ttk.Checkbutton(self.input_frame, text=opt, variable=self.temp_data["pain_others"][opt])
+            cb.pack(anchor="w")
+        btn = ttk.Button(self.input_frame, text="提交", command=self.process_pain_other)
+        btn.pack(pady=10)
+
+    def process_pain_other(self):
+        selected = [opt for opt, var in self.temp_data["pain_others"].items() if var.get()]
+        if "没有明显诱因" in selected and len(selected) > 1:
+            self.agent_say("不能同时选择“没有明显诱因”和其他动作，请重新选择。")
+            return
+        self.pain_triggers = selected
+        self.agent_say(f"已记录：{', '.join(self.pain_triggers) if self.pain_triggers else '无'}")
+        self.start_body_type()
+
+    def start_body_type(self):
+        self.state = "body"
+        self.agent_say("第五步：体型评估（软组织厚度影响负压传导）\n请选择最符合你的体型：")
+        self.clear_input_area()
+        options = [("偏瘦 → 等级 -1", -1), ("标准（中等） → 等级 不变", 0), ("偏厚 → 等级 +1", 1)]
+        for text, delta in options:
+            btn = ttk.Button(self.input_frame, text=text, command=lambda d=delta: self.select_body(d))
+            btn.pack(fill="x", pady=2)
+
+    def select_body(self, delta):
+        if delta == -1:
+            self.body_type_desc = "偏瘦"
+        elif delta == 0:
+            self.body_type_desc = "标准"
+        else:
+            self.body_type_desc = "偏厚"
+        old = self.level
+        self.level = max(1, min(6, self.level + delta))
+        self.agent_say(f"体型 {self.body_type_desc} → 调整 {delta:+d}，等级变化：{old} → {self.level}")
+        self.start_first_time()
+
+    def start_first_time(self):
+        self.state = "first"
+        self.agent_say("第六步：初次使用限制\n你是第一次使用这个设备吗？")
+        self.clear_input_area()
+        ttk.Button(self.input_frame, text="是", command=self.first_time_yes).pack(fill="x", pady=2)
+        ttk.Button(self.input_frame, text="不是", command=self.first_time_no).pack(fill="x", pady=2)
+
+    def first_time_yes(self):
+        self.first_time = True
+        old = self.level
+        self.level = min(self.level, 2)
+        self.agent_say(f"您是第一次使用，等级限制最高为 L2。等级变化：{old} → {self.level}")
+        self.save_initial_and_ask_device()
+
+    def first_time_no(self):
+        self.first_time = False
+        self.agent_say("您不是第一次使用，无额外限制。")
+        self.save_initial_and_ask_device()
+
+    def save_initial_and_ask_device(self):
+        initial = {
+            "stiffness": self.stiffness_desc,
+            "squat_pain_before": self.squat_before,
+            "worst_action": self.worst_action,
+            "worst_action_level": self.worst_action_level,
+            "pain_triggers": self.pain_triggers,
+            "body_type": self.body_type_desc,
+            "first_time": self.first_time,
+            "recommended_level": self.level
+        }
+        self.session.new_session(initial)
+        mode_map = {1: "L1", 2: "L2", 3: "L3", 4: "H1", 5: "H2", 6: "H3"}
+        mode = mode_map.get(self.level, "L1")
+        params = PAD_MODES[mode]
+        self.agent_say(f"🎯 您的推荐模式：{mode}\n简要说明：{params['user_explain']}\n"
+                       f"参数：压力 {params['pressure']} mmHg，时长 {params['application']} s，"
+                       f"休息 {params['rest']} s，循环 {params['cycles']} 次\n"
+                       f"使用建议：{params['daily_advice']}")
+        self.agent_say("请将设备正确佩戴在膝盖上，然后点击“已佩戴好”开始治疗。")
+        self.clear_input_area()
+        ttk.Button(self.input_frame, text="已佩戴好，开始治疗", command=self.start_device_day1).pack(pady=10)
+
+    def start_device_day1(self):
+        self.agent_say("正在启动设备...（模拟治疗）")
+        self.agent_say("治疗已完成。现在请反馈使用后的感受。")
+        self.start_feedback_pain()
+
+    # ---------- 日常使用流程（含手动确认调整） ----------
+    def start_daily_use(self):
+        last_feedback = self.session.get_last_feedback_for_adjustment()
+        current_level = self.get_level_from_mode(self.session.get_current_mode_history())
+        suggested_level, reason_text, adj_type = self.get_suggested_adjustment(last_feedback, current_level)
+        self.temp_data["suggested_level"] = suggested_level
+        self.temp_data["current_level_for_today"] = current_level
+
+        mode_map = {1:"L1",2:"L2",3:"L3",4:"H1",5:"H2",6:"H3"}
+        current_mode = mode_map.get(current_level, "L2")
+        suggested_mode = mode_map.get(suggested_level, "L2")
+
+        msg = f"根据你昨天的反馈：\n{reason_text}\n"
+        if adj_type == "up":
+            msg += f"建议升级：{current_mode} → {suggested_mode} (强度+1)\n"
+        elif adj_type == "down":
+            msg += f"建议降级：{current_mode} → {suggested_mode} (强度-1)\n"
+        else:
+            msg += f"建议保持不变：{current_mode}\n"
+        msg += "是否接受这个调整建议？"
+        self.agent_say(msg)
+
+        self.clear_input_area()
+        btn_frame = ttk.Frame(self.input_frame)
+        btn_frame.pack(pady=5)
+        ttk.Button(btn_frame, text="✅ 接受调整", command=self.accept_adjustment).pack(side="left", padx=10)
+        ttk.Button(btn_frame, text="❌ 拒绝，保持原模式", command=self.reject_adjustment).pack(side="left", padx=10)
+
+    def accept_adjustment(self):
+        self.level = self.temp_data["suggested_level"]
+        self.agent_say(f"已接受调整，今天使用模式：{self.get_mode_from_level(self.level)}")
+        self.proceed_to_device()
+
+    def reject_adjustment(self):
+        self.level = self.temp_data["current_level_for_today"]
+        self.agent_say(f"已拒绝调整，今天维持原模式：{self.get_mode_from_level(self.level)}")
+        self.proceed_to_device()
+
+    def get_mode_from_level(self, level):
+        mode_map = {1:"L1",2:"L2",3:"L3",4:"H1",5:"H2",6:"H3"}
+        return mode_map.get(level, "L2")
+
+    def get_suggested_adjustment(self, fb, current_level):
+        if not fb:
+            return current_level, "无历史反馈，维持当前强度", "same"
+
+        if fb["adverse_flags"]:
+            new = max(1, current_level - 1)
+            if new < current_level:
+                return new, "⚠️ 出现不良反应，建议降级", "down"
+            else:
+                return current_level, "已是最低强度，无法再降", "same"
+
+        if fb["global_effect"] == "更不适":
+            new = max(1, current_level - 1)
+            if new < current_level:
+                return new, "😟 整体感觉更不适，建议降级", "down"
+            else:
+                return current_level, "已是最低强度，无法再降", "same"
+
+        feel = fb["intensity_feel"]
+        if feel == "有点强":
+            new = max(1, current_level - 1)
+            if new < current_level:
+                return new, "⚡ 感觉强度偏强，建议降级", "down"
+            else:
+                return current_level, "已是最低强度", "same"
+        elif feel == "太轻":
+            new = min(6, current_level + 1)
+            if new > current_level:
+                return new, "💪 感觉强度偏轻，建议升级", "up"
+            else:
+                return current_level, "已达最高强度", "same"
+        else:
+            return current_level, "👍 强度合适，无不适，建议维持", "same"
+
+    def proceed_to_device(self):
+        mode = self.get_mode_from_level(self.level)
+        params = PAD_MODES[mode]
+        self.agent_say(f"今天使用模式：{mode}\n"
+                       f"参数：压力 {params['pressure']} mmHg，时长 {params['application']} s，"
+                       f"休息 {params['rest']} s，循环 {params['cycles']} 次\n"
+                       f"使用建议：{params['daily_advice']}")
+        self.agent_say("请佩戴好设备，然后点击“已佩戴好”开始治疗。")
+        self.clear_input_area()
+        ttk.Button(self.input_frame, text="已佩戴好，开始治疗", command=self.start_device_daily).pack(pady=10)
+
+    def start_device_daily(self):
+        self.agent_say("正在启动设备...（模拟治疗）")
+        self.agent_say("治疗已完成。请反馈使用后的感受。")
+        self.start_feedback_pain()
+
+    def get_level_from_mode(self, mode):
+        rev = {"L1":1,"L2":2,"L3":3,"H1":4,"H2":5,"H3":6}
+        return rev.get(mode,2)
+
+    # ---------- 使用后反馈 ----------
+    def start_feedback_pain(self):
+        self.state = "feedback_pain"
+        self.agent_say("请再次下蹲，膝盖不适程度是多少？（0-10分）")
+        self.clear_input_area()
+        self.feedback_slider = tk.Scale(self.input_frame, from_=0, to=10, orient="horizontal", length=300)
+        self.feedback_slider.pack(pady=10)
+        ttk.Button(self.input_frame, text="确认", command=self.process_feedback_pain).pack()
+
+    def process_feedback_pain(self):
+        self.squat_after = self.feedback_slider.get()
+        self.agent_say(f"后测疼痛：{self.squat_after} 分")
+        self.start_feedback_global()
+
+    def start_feedback_global(self):
+        self.state = "feedback_global"
+        self.agent_say("使用后整体感觉如何？")
+        self.clear_input_area()
+        for opt in ["更舒服", "没变化", "更不适"]:
+            ttk.Button(self.input_frame, text=opt, command=lambda o=opt: self.set_global(o)).pack(fill="x", pady=2)
+
+    def set_global(self, val):
+        self.global_effect = val
+        self.agent_say(f"整体感觉：{val}")
+        self.start_feedback_intensity()
+
+    def start_feedback_intensity(self):
+        self.state = "feedback_intensity"
+        self.agent_say("你觉得刚才的强度怎么样？")
+        self.clear_input_area()
+        for opt in ["太轻", "刚好", "有点强"]:
+            ttk.Button(self.input_frame, text=opt, command=lambda o=opt: self.set_intensity(o)).pack(fill="x", pady=2)
+
+    def set_intensity(self, val):
+        self.intensity_feel = val
+        self.agent_say(f"强度感觉：{val}")
+        self.start_completion_check()   # 新增：询问是否完成方案
+
+    # ---------- 新增：完成情况与建议 ----------
+    def start_completion_check(self):
+        self.state = "completion_check"
+        self.agent_say("今天是否完成了推荐的完整方案？")
+        self.clear_input_area()
+        self.temp_data["completed"] = StringVar()
+        ttk.Radiobutton(self.input_frame, text="是", variable=self.temp_data["completed"], value="是").pack(anchor="w", pady=2)
+        ttk.Radiobutton(self.input_frame, text="否", variable=self.temp_data["completed"], value="否").pack(anchor="w", pady=2)
+        ttk.Button(self.input_frame, text="下一步", command=self.process_completion).pack(pady=10)
+
+    def process_completion(self):
+        completed = self.temp_data["completed"].get()
+        if not completed:
+            self.agent_say("请选择是或否。")
+            return
+        self.temp_data["completed_value"] = completed
+        if completed == "否":
+            self.start_not_completed_reason()
+        else:
+            self.start_better_suggestion()
+
+    def start_not_completed_reason(self):
+        self.agent_say("今天没有完成的主要原因？")
+        self.clear_input_area()
+        reasons = ["忘记了", "没时间", "效果不明显", "使用不舒服", "其他"]
+        self.temp_data["reason_var"] = StringVar()
+        for r in reasons:
+            ttk.Radiobutton(self.input_frame, text=r, variable=self.temp_data["reason_var"], value=r).pack(anchor="w", pady=2)
+        ttk.Button(self.input_frame, text="下一步", command=self.process_reason).pack(pady=10)
+
+    def process_reason(self):
+        reason = self.temp_data["reason_var"].get()
+        if not reason:
+            self.agent_say("请选择一个原因。")
+            return
+        self.temp_data["not_completed_reason"] = reason
+        self.start_better_suggestion()
+
+    def start_better_suggestion(self):
+        self.agent_say("有什么可以让我们做得更好吗？（选填）")
+        self.clear_input_area()
+        self.better_entry = tk.Entry(self.input_frame, width=50)
+        self.better_entry.pack(pady=5)
+        btn_frame = ttk.Frame(self.input_frame)
+        btn_frame.pack(pady=10)
+        ttk.Button(btn_frame, text="跳过", command=self.skip_better).pack(side="left", padx=10)
+        ttk.Button(btn_frame, text="提交", command=self.submit_better).pack(side="left", padx=10)
+
+    def skip_better(self):
+        self.temp_data["better_suggestion"] = ""
+        self.start_feedback_adverse()
+
+    def submit_better(self):
+        self.temp_data["better_suggestion"] = self.better_entry.get()
+        self.start_feedback_adverse()
+
+    # 原有的不良反应询问（保持不变）
+    def start_feedback_adverse(self):
+        self.state = "feedback_adverse"
+        self.agent_say("使用后有没有出现以下情况？（可多选）")
+        adverse_opts = ["明显疼痛加重", "皮肤明显不适", "膝盖更肿/更胀", "没有以上情况"]
+        self.temp_data["adverse"] = {opt: BooleanVar() for opt in adverse_opts}
+        self.clear_input_area()
+        for opt in adverse_opts:
+            cb = ttk.Checkbutton(self.input_frame, text=opt, variable=self.temp_data["adverse"][opt])
+            cb.pack(anchor="w")
+        ttk.Button(self.input_frame, text="提交", command=self.process_feedback_adverse).pack(pady=10)
+
+    def process_feedback_adverse(self):
+        selected = [opt for opt, var in self.temp_data["adverse"].items() if var.get()]
+        if "没有以上情况" in selected and len(selected) > 1:
+            self.agent_say("不能同时选择“没有以上情况”和其他不良反应，请重新选择。")
+            return
+        self.adverse_flags = [s for s in selected if s != "没有以上情况"]
+        self.agent_say(f"不良反应：{', '.join(self.adverse_flags) if self.adverse_flags else '无'}")
+        mode = self.get_mode_from_level(self.level)
+        day_record = {
+            "date": date.today().isoformat(),
+            "mode": mode,
+            "squat_before": None,
+            "squat_after": self.squat_after,
+            "global_effect": self.global_effect,
+            "intensity_feel": self.intensity_feel,
+            "adverse_flags": self.adverse_flags,
+            "completed": self.temp_data.get("completed_value", "是"),
+            "not_completed_reason": self.temp_data.get("not_completed_reason", ""),
+            "better_suggestion": self.temp_data.get("better_suggestion", "")
+        }
+        self.session.add_daily_record(day_record)
+
+        if self.session.need_periodic_assessment():
+            self.agent_say("你已经连续使用7天，现在进行周期性综合评估。")
+            self.start_periodic_assessment()
+        else:
+            self.agent_say("今天的使用记录已保存。明天请继续运行程序。\n你可以关闭程序，明天再打开。")
+            self.clear_input_area()
+            ttk.Button(self.input_frame, text="退出", command=self.root.destroy).pack(pady=10)
+
+    # ---------- 周期性综合评估（每7天） ----------
+    def start_periodic_assessment(self):
+        self.state = "periodic_assessment"
+        self.temp_data["assessment"] = {}
+        base_action, base_level = self.session.get_cycle_baseline()
+        self.temp_data["assessment"]["baseline_action"] = base_action
+        self.temp_data["assessment"]["baseline_level"] = base_level
+        self.agent_say(f"本次评估周期基准：最困扰动作“{base_action}”，不适程度 {base_level}/4。")
+        self.agent_say("请回答以下问题，我们将对比周期前后的变化。")
+        self.agent_say("Q1: 现在，再次做这个动作时，不适程度是多少？（0-4）")
+        self.clear_input_area()
+        self.q1_slider = tk.Scale(self.input_frame, from_=0, to=4, orient="horizontal", length=300, resolution=1)
+        self.q1_slider.pack(pady=10)
+        ttk.Button(self.input_frame, text="确认", command=self.process_periodic_q1).pack()
+
+    def process_periodic_q1(self):
+        self.temp_data["assessment"]["current_level"] = self.q1_slider.get()
+        self.agent_say(f"记录：{self.temp_data['assessment']['current_level']}/4")
+        self.agent_say("Q2: 目前最易让膝盖不舒服的动作是？")
+        self.clear_input_area()
+        actions = ["下楼梯", "上楼梯", "下蹲", "久坐后站起", "跑步/运动", "已没有明显诱因"]
+        self.temp_data["assess_q2_var"] = StringVar()
+        for act in actions:
+            rb = ttk.Radiobutton(self.input_frame, text=act, variable=self.temp_data["assess_q2_var"], value=act)
+            rb.pack(anchor="w", pady=2)
+        ttk.Button(self.input_frame, text="下一步", command=self.process_periodic_q2).pack(pady=10)
+
+    def process_periodic_q2(self):
+        act = self.temp_data["assess_q2_var"].get()
+        if not act:
+            self.agent_say("请选择一个选项。")
+            return
+        self.temp_data["assessment"]["worst_action_now"] = act
+        self.agent_say(f"当前最不适动作：{act}")
+        self.agent_say("Q3: 做这个动作时，你的不适程度是？（0-4）")
+        self.clear_input_area()
+        self.q3_slider = tk.Scale(self.input_frame, from_=0, to=4, orient="horizontal", length=300, resolution=1)
+        self.q3_slider.pack(pady=10)
+        ttk.Button(self.input_frame, text="确认", command=self.process_periodic_q3).pack()
+
+    def process_periodic_q3(self):
+        self.temp_data["assessment"]["q3_level"] = self.q3_slider.get()
+        self.agent_say(f"不适程度：{self.temp_data['assessment']['q3_level']}/4")
+        self.agent_say("Q4: 你现在是否仍感觉膝盖有点紧或活动不开？")
+        self.clear_input_area()
+        for opt in ["没有", "有一点", "明显"]:
+            ttk.Button(self.input_frame, text=opt, command=lambda o=opt: self.set_periodic_q4(o)).pack(fill="x", pady=2)
+
+    def set_periodic_q4(self, val):
+        self.temp_data["assessment"]["stiffness_now"] = val
+        self.agent_say(f"选择：{val}")
+        self.agent_say("Q5: 当前模式强度感觉如何？（针对最近一次使用的强度）")
+        self.clear_input_area()
+        for opt in ["太轻", "合适", "偏强"]:
+            ttk.Button(self.input_frame, text=opt, command=lambda o=opt: self.set_periodic_q5(o)).pack(fill="x", pady=2)
+
+    def set_periodic_q5(self, val):
+        self.temp_data["assessment"]["intensity_feel"] = val
+        self.agent_say(f"强度感觉：{val}")
+        self.agent_say("Q6: 最近是否出现以下情况？（可多选）")
+        self.clear_input_area()
+        adverse_opts = ["明显疼痛增加", "皮肤明显不适", "膝盖肿胀或发热", "没有以上情况"]
+        self.temp_data["assess_adverse"] = {opt: BooleanVar() for opt in adverse_opts}
+        for opt in adverse_opts:
+            cb = ttk.Checkbutton(self.input_frame, text=opt, variable=self.temp_data["assess_adverse"][opt])
+            cb.pack(anchor="w")
+        ttk.Button(self.input_frame, text="提交", command=self.process_periodic_q6).pack(pady=10)
+
+    def process_periodic_q6(self):
+        selected = [opt for opt, var in self.temp_data["assess_adverse"].items() if var.get()]
+        if "没有以上情况" in selected and len(selected) > 1:
+            self.agent_say("不能同时选择“没有以上情况”和其他项，请重新选择。")
+            return
+        self.temp_data["assessment"]["adverse_recent"] = [s for s in selected if s != "没有以上情况"]
+        self.agent_say("评估完成，正在生成阶段总结...")
+        self.generate_periodic_summary()
+
+    def generate_periodic_summary(self):
+        self.clear_input_area()
+        base_action = self.temp_data["assessment"]["baseline_action"]
+        base_level = self.temp_data["assessment"]["baseline_level"]
+        current_level = self.temp_data["assessment"]["current_level"]
+        delta = current_level - base_level
+        if delta <= -2:
+            improvement = "明显改善"
+        elif delta == -1:
+            improvement = "轻度改善"
+        elif delta == 0:
+            improvement = "基本稳定"
+        else:
+            improvement = "状态下降"
+
+        current_worst = self.temp_data["assessment"]["worst_action_now"]
+        summary = f"【周期总结】\n\n你的膝盖状态{improvement}\n\n"
+        summary += f"周期起始最困扰你的动作：{base_action}\n"
+        summary += f"周期起始不适程度：{'☆'*(base_level+1)}{'☆'*(3-base_level)} ({base_level}/4)\n"
+        summary += f"现在不适程度：{'☆'*(current_level+1)}{'☆'*(3-current_level)} ({current_level}/4)\n"
+        if improvement == "明显改善":
+            summary += "明显改善！不适明显减轻，说明当前方案正在发挥积极作用。\n"
+        elif improvement == "轻度改善":
+            summary += "轻度改善，不适较周期开始有所减轻，建议继续坚持。\n"
+        elif improvement == "基本稳定":
+            summary += "目前尚未观察到明显变化，建议继续坚持使用。\n"
+        else:
+            summary += "状态下降，系统将根据你的反馈进一步调整方案。\n"
+
+        summary += f"\n当前最易让膝盖不舒服的动作是：{current_worst}\n"
+        if current_worst != base_action:
+            summary += f"相比上一个周期，主要困扰点从“{base_action}”转移到了“{current_worst}”。\n"
+
+        summary += "\n下一阶段将继续根据你的每日反馈微调强度。"
+        self.agent_say(summary)
+
+        assessment_record = {
+            "date": date.today().isoformat(),
+            "baseline_action": base_action,
+            "baseline_level": base_level,
+            "current_level": current_level,
+            "worst_action_now": current_worst,
+            "q3_level": self.temp_data["assessment"]["q3_level"],
+            "stiffness_now": self.temp_data["assessment"]["stiffness_now"],
+            "intensity_feel": self.temp_data["assessment"]["intensity_feel"],
+            "adverse_recent": self.temp_data["assessment"]["adverse_recent"],
+            "improvement": improvement
+        }
+        self.session.add_assessment(assessment_record)
+
+        self.agent_say("周期性评估完成。即将开始下一天的治疗...")
+        self.continue_to_next_day()
+
+    def continue_to_next_day(self):
+        self.squat_after = None
+        self.global_effect = None
+        self.intensity_feel = None
+        self.adverse_flags = []
+        self.temp_data = {}
+        self.clear_input_area()
+        self.agent_say("--- 新的一天 ---")
+        day = len(self.session.data["daily_records"]) + 1
+        self.agent_say(f"这是你的第 {day} 天使用。")
+        self.agent_say("我们将根据你昨天的反馈，智能调整今天的模式。")
+        self.start_daily_use()
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = DialogueAgent(root)
+    root.mainloop()

@@ -21,6 +21,8 @@ export function Device() {
   const [hasNewVersion] = useState(true);
   const [otaStatus, setOtaStatus] = useState<'idle' | 'updating' | 'success'>('idle');
   const [otaProgress, setOtaProgress] = useState(0);
+  const [isCareInProgress, setIsCareInProgress] = useState(false);
+  const [careProgress, setCareProgress] = useState(0);
 
   useEffect(() => {
     if (isDeviceConnected && connectedDeviceName) {
@@ -41,10 +43,15 @@ export function Device() {
     }, 2500);
   };
 
+  const handleStartCare = () => {
+    useStore.getState().setDeviceStatus('running');
+    navigate('/');
+  };
+
   const handleConnect = (name: string) => {
     toast.success('连接成功');
     connectDevice(name);
-    navigate(-1);
+    setCurrentView('details');
   };
 
   const handleUnbind = () => {
@@ -91,6 +98,10 @@ export function Device() {
       <div className="flex flex-col h-full dark:bg-[#121212] bg-[#F5F7FA] overflow-y-auto pb-24 transition-colors">
         {renderHeader('添加设备', () => navigate(-1))}
         <div className="p-5 space-y-4">
+          <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl flex items-start gap-3 mb-6 border border-orange-100 dark:border-orange-900/30">
+            <AlertCircle className="text-orange-500 shrink-0 mt-0.5" size={20} />
+            <p className="text-sm text-orange-800 dark:text-orange-200">请确保您的设备已开启电源，并且离手机不远，然后选择下方设备进行蓝牙连接。</p>
+          </div>
           <p className="text-[14px] dark:text-[#9CA3AF] text-gray-500 font-medium mb-2">请选择要连接的设备类型</p>
           
           <div 
@@ -121,11 +132,18 @@ export function Device() {
                 <Zap size={28} />
               </div>
               <div className="flex-1">
-                <h3 className="text-[17px] font-bold dark:text-[#F5F5F5] text-gray-900">LED 治疗仪</h3>
+                <h3 className="text-[17px] font-bold dark:text-[#F5F5F5] text-gray-900">LED 康养仪</h3>
                 <p className="text-[12px] dark:text-[#9CA3AF] text-gray-500 mt-1">红光/红外线消炎镇痛</p>
               </div>
             </div>
           </div>
+
+          <button 
+            onClick={() => navigate('/')}
+            className="w-full h-12 mt-4 bg-transparent text-gray-400 font-medium text-[14px] flex items-center justify-center transition-all active:text-gray-600"
+          >
+            暂无设备，跳过
+          </button>
         </div>
       </div>
     );
@@ -256,6 +274,13 @@ export function Device() {
             <span className="text-[12px] font-medium">已连接</span>
           </div>
         </div>
+
+        <button 
+          onClick={handleStartCare}
+          className="w-full bg-[#2C7CFF] hover:bg-blue-600 text-white rounded-[16px] py-4 font-bold text-[18px] shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+        >
+          <PlayCircle size={24} /> 启动设备开始康养
+        </button>
 
         <div className="dark:bg-[#1E1E1E] bg-white rounded-[20px] shadow-sm border dark:border-[#2C2C2C] border-gray-100 overflow-hidden transition-colors divide-y dark:divide-[#2C2C2C] divide-gray-50">
           

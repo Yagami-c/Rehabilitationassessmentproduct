@@ -67,8 +67,15 @@ export function DeviceSelectionModal({ onSelect, onClose }: DeviceSelectionModal
 
             {/* Card 2 */}
             <div className="w-full relative rounded-2xl overflow-hidden opacity-70">
-              <ImageWithFallback src={ledDeviceImg} alt="LED治疗仪" className="w-full h-auto object-cover" />
+              <ImageWithFallback src={ledDeviceImg} alt="LED康养仪" className="w-full h-auto object-cover" />
             </div>
+
+            <button 
+              onClick={() => onClose ? onClose() : onSelect('skip')}
+              className="w-full h-10 mt-2 bg-transparent text-gray-400 font-medium text-[13px] flex items-center justify-center transition-all active:text-gray-600"
+            >
+              暂无设备，跳过
+            </button>
           </div>
         ) : (
           <div className="space-y-4 relative z-10 animate-in slide-in-from-right-4 fade-in duration-300">

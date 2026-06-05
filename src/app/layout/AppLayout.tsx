@@ -14,7 +14,7 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 export function AppLayout() {
-  const { isLoggedIn, isDarkMode, isDeviceConnected } = useStore();
+  const { isLoggedIn, isDarkMode, isDeviceConnected, deviceStatus, setDeviceStatus, dailyRecords, needPeriodicAssessment, preAssessment } = useStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [isConnectionOverlayOpen, setIsConnectionOverlayOpen] = useState(false);
@@ -27,16 +27,29 @@ export function AppLayout() {
   // Remote Control States
   const [deviceName, setDeviceName] = useState('智能膝关节康养仪 PAD');
   const [isEditingName, setIsEditingName] = useState(false);
-  const [deviceStatus, setDeviceStatus] = useState<'running' | 'paused' | 'sleep' | 'idle'>('idle');
   const [currentRound, setCurrentRound] = useState(1);
   const totalRounds = 10;
   const [deviceMode, setDeviceMode] = useState('L2 温和放松模式');
+  const [showModeSelect, setShowModeSelect] = useState(false);
   
   // Chat States
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'ai', text: '你好！我是你的康养AI助手，关于训练计划、设备使用或疼痛症状，有什么我可以帮你的吗？' }
-  ]);
+  const [chatMessages, setChatMessages] = useState<{role: string, text: string}[]>([]);
+
+  useEffect(() => {
+    if (chatMessages.length === 0) {
+      const isNewUser = !preAssessment;
+      if (isNewUser) {
+        setChatMessages([{ role: 'ai', text: '你好！我是你的康养智能助手。我们将首先进行初始评估，确定你的膝盖状况，并推荐第一天的使用模式。' }]);
+      } else if (needPeriodicAssessment()) {
+        const days = dailyRecords.length;
+        setChatMessages([{ role: 'ai', text: `你已经完成了 ${days} 天的使用。现在需要进行7天综合评估，请前往评估页面完成打卡。` }]);
+      } else {
+        const days = dailyRecords.length + 1;
+        setChatMessages([{ role: 'ai', text: `欢迎回来！这是你的第 ${days} 天使用。我们将根据你昨天的反馈，智能调整今天的模式。有什么问题都可以随时问我！` }]);
+      }
+    }
+  }, [preAssessment, needPeriodicAssessment, dailyRecords.length, chatMessages.length]);
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
@@ -72,9 +85,18 @@ export function AppLayout() {
     
     // Mock AI response
     setTimeout(() => {
+      let responseText = `我收到你的问题了：“${input}”。`;
+      if (needPeriodicAssessment()) {
+        responseText += "目前你需要完成7天综合评估，建议你先前往评估页面完成打卡。";
+      } else if (!preAssessment) {
+        responseText += "看起来你还是新用户，请先完成初始评估。";
+      } else {
+        responseText += "根据你最近的下蹲评估记录，建议今天保持较轻柔的活动。";
+      }
+
       setChatMessages(prev => [...prev, { 
         role: 'ai', 
-        text: `我收到你的问题了：“${input}”。根据你最近的下蹲评估，建议今天保持较轻柔的活动。` 
+        text: responseText
       }]);
     }, 1000);
   };
@@ -142,7 +164,7 @@ export function AppLayout() {
                   <MessageCircle className="text-[#2C7CFF]" size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#1A1A1A] text-[16px]">康养AI客服</h3>
+                  <h3 className="font-bold text-[#1A1A1A] text-[16px]">康养智能助手</h3>
                   <p className="text-[11px] text-[#00C853] flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#00C853]"></span> 在线
                   </p>
@@ -336,7 +358,7 @@ export function AppLayout() {
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-gray-300" />
                     <div>
-                      <div className="font-bold text-[15px] text-gray-700">Led 治疗仪</div>
+                      <div className="font-bold text-[15px] text-gray-700">Led 康养仪</div>
                       <div className="text-xs text-gray-400 mt-0.5">信号: -78dBm</div>
                     </div>
                   </div>
@@ -410,8 +432,11 @@ export function AppLayout() {
               <div className="dark:bg-[#1E1E1E] bg-white rounded-[16px] p-4 shadow-sm border dark:border-[#2C2C2C] border-gray-50 flex flex-col gap-4 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="text-[14px] dark:text-[#9CA3AF] text-[#6B7280] font-medium">当前模式</div>
-                  <button className="flex items-center gap-1 text-[15px] font-bold dark:text-[#F5F5F5] text-[#1A1A1A] active:opacity-70 dark:bg-gray-800 bg-gray-50 px-3 py-1.5 rounded-lg border dark:border-gray-700 border-transparent transition-colors">
-                    <span className="text-[#2C7CFF] mr-0.5">L2</span> 温和放松模式 <ChevronRight size={16} className="text-[#9CA3AF]" />
+                  <button 
+                    onClick={() => setShowModeSelect(true)}
+                    className="flex items-center gap-1 text-[15px] font-bold dark:text-[#F5F5F5] text-[#1A1A1A] active:opacity-70 dark:bg-gray-800 bg-gray-50 px-3 py-1.5 rounded-lg border dark:border-gray-700 border-transparent transition-colors"
+                  >
+                    <span className="text-[#2C7CFF] mr-0.5">{deviceMode.split(' ')[0]}</span> {deviceMode.split(' ').slice(1).join(' ')} <ChevronRight size={16} className="text-[#9CA3AF]" />
                   </button>
                 </div>
                 
@@ -516,6 +541,69 @@ export function AppLayout() {
                   <span className="text-[11px] font-medium dark:text-[#FF8A80] text-[#D50000]">结束</span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mode Selection Modal */}
+      {showModeSelect && (
+        <div className="absolute inset-0 z-[60] flex flex-col justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="absolute inset-0"
+            onClick={() => setShowModeSelect(false)}
+          />
+          <div className="dark:bg-[#1E1E1E] bg-white rounded-t-[32px] w-full flex flex-col shadow-[0_-8px_30px_rgba(0,0,0,0.12)] animate-in slide-in-from-bottom-full duration-300 relative z-10">
+            <div className="w-12 h-1.5 bg-gray-300 dark:bg-[#3C3C3C] rounded-full mx-auto my-3" />
+            <div className="px-6 py-4 flex justify-between items-center border-b dark:border-[#2C2C2C] border-gray-100">
+              <h2 className="text-[18px] font-bold dark:text-[#F5F5F5] text-[#1A1A1A]">选择康养模式</h2>
+              <button 
+                onClick={() => setShowModeSelect(false)}
+                className="w-8 h-8 rounded-full dark:bg-[#2C2C2C] bg-gray-100 flex items-center justify-center dark:text-[#F5F5F5] text-gray-500 active:scale-95 transition-transform"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 space-y-3">
+              {[
+                { id: 'L1 轻柔唤醒模式', level: 'L1', name: '轻柔唤醒模式', desc: '适合初次使用或疼痛明显时，低负压温和作用。' },
+                { id: 'L2 温和放松模式', level: 'L2', name: '温和放松模式', desc: '日常放松推荐，中低负压缓解关节紧张。' },
+                { id: 'L3 深度松动模式', level: 'L3', name: '深度松动模式', desc: '针对较重僵硬，中高强度拉伸关节囊。' },
+                { id: 'L4 强效牵引模式', level: 'L4', name: '强效牵引模式', desc: '适应度较高后使用，高负压强力松动。' },
+              ].map(mode => (
+                <button
+                  key={mode.id}
+                  onClick={() => {
+                    setDeviceMode(mode.id);
+                    setShowModeSelect(false);
+                  }}
+                  className={clsx(
+                    "w-full flex items-center justify-between p-4 rounded-xl border text-left active:scale-[0.98] transition-all",
+                    deviceMode === mode.id 
+                      ? "border-[#2C7CFF] bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-500/50" 
+                      : "border-gray-100 bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
+                  )}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={clsx(
+                        "text-[14px] font-bold",
+                        deviceMode === mode.id ? "text-[#2C7CFF]" : "text-gray-900 dark:text-white"
+                      )}>{mode.level}</span>
+                      <span className={clsx(
+                        "text-[16px] font-bold",
+                        deviceMode === mode.id ? "text-blue-900 dark:text-blue-100" : "text-gray-900 dark:text-white"
+                      )}>{mode.name}</span>
+                    </div>
+                    <p className="text-[12px] text-gray-500 dark:text-gray-400">{mode.desc}</p>
+                  </div>
+                  {deviceMode === mode.id && (
+                    <div className="w-6 h-6 rounded-full bg-[#2C7CFF] text-white flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>

@@ -32,21 +32,51 @@ export type PostAssessmentData = {
   nextAdvice: string;
 };
 
+export type DailyRecord = {
+  date: string;
+  mode: string;
+  squatBefore?: number | null;
+  squatAfter: number;
+  globalEffect: '更舒服' | '没变化' | '更不适';
+  intensityFeel: '太轻' | '刚好' | '有点强';
+  adverseFlags: string[];
+  completed?: boolean;
+  notCompletedReason?: string;
+};
+
+export type AssessmentRecord = {
+  date: string;
+  baselineAction: string;
+  baselineLevel: number;
+  currentLevel: number; // Q1
+  worstActionNow: string; // Q2
+  q3Level: number; // Q3
+  stiffnessNow: string; // Q4
+  intensityFeel: string; // Q5
+  adverseFlags: string[]; // Q6
+  improvement: string;
+};
+
 export type AppState = {
   isLoggedIn: boolean;
   isDarkMode: boolean;
   isDeviceConnected: boolean;
   connectedDeviceName: string;
+  deviceStatus: 'idle' | 'running' | 'paused' | 'sleep';
   points: number;
   isMediaPipeUnlocked: boolean;
   profile: UserProfile | null;
   preAssessment: PreAssessmentData | null;
   postAssessment: PostAssessmentData | null;
+  dailyRecords: DailyRecord[];
+  assessments: AssessmentRecord[];
+  lastAssessmentDay: number;
   login: () => void;
   logout: () => void;
   toggleDarkMode: () => void;
   connectDevice: (name: string) => void;
   disconnectDevice: () => void;
+  setDeviceStatus: (status: 'idle' | 'running' | 'paused' | 'sleep') => void;
   updateProfile: (profile: Partial<UserProfile>) => void;
   setPoints: (points: number) => void;
   unlockMediaPipe: () => boolean;
@@ -54,6 +84,9 @@ export type AppState = {
   setPostAssessment: (data: Partial<PostAssessmentData>) => void;
   calculatePreAssessmentLevel: () => number;
   calculatePostAssessmentLevel: () => { nextLevel: number | string, advice: string };
+  addDailyRecord: (record: DailyRecord) => void;
+  addAssessment: (assessment: AssessmentRecord) => void;
+  needPeriodicAssessment: () => boolean;
 };
 
 export const useStore = create<AppState>((set, get) => ({
@@ -61,6 +94,7 @@ export const useStore = create<AppState>((set, get) => ({
   isDarkMode: false,
   isDeviceConnected: false,
   connectedDeviceName: '',
+  deviceStatus: 'idle',
   points: 250, // default test points
   isMediaPipeUnlocked: false,
   profile: {
@@ -74,11 +108,15 @@ export const useStore = create<AppState>((set, get) => ({
   },
   preAssessment: null,
   postAssessment: null,
+  dailyRecords: [],
+  assessments: [],
+  lastAssessmentDay: 0,
   login: () => set({ isLoggedIn: true }),
   logout: () => set({ isLoggedIn: false }),
   toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
-  connectDevice: (name) => set({ isDeviceConnected: true, connectedDeviceName: name }),
-  disconnectDevice: () => set({ isDeviceConnected: false, connectedDeviceName: '' }),
+  connectDevice: (name) => set({ isDeviceConnected: true, connectedDeviceName: name, deviceStatus: 'idle' }),
+  disconnectDevice: () => set({ isDeviceConnected: false, connectedDeviceName: '', deviceStatus: 'idle' }),
+  setDeviceStatus: (status) => set({ deviceStatus: status }),
   setPoints: (points) => set({ points }),
   unlockMediaPipe: () => {
     const { points } = get();
@@ -171,7 +209,7 @@ export const useStore = create<AppState>((set, get) => ({
         const next = currentLevel - 1;
         if (next < 1) {
           nextLevel = '暂停使用';
-          advice = '强度过强，建议暂停';
+          advice = '强度过强，建议���停';
         } else {
           nextLevel = next;
           advice = '您感觉强度偏强，应降低一级';
@@ -196,5 +234,18 @@ export const useStore = create<AppState>((set, get) => ({
     });
 
     return { nextLevel: finalNextLevel, advice: finalAdvice };
+  },
+  addDailyRecord: (record) => set((state) => ({ dailyRecords: [...state.dailyRecords, record] })),
+  addAssessment: (assessment) => set((state) => {
+    const newRecords = [...state.assessments, assessment];
+    return {
+      assessments: newRecords,
+      lastAssessmentDay: state.dailyRecords.length
+    };
+  }),
+  needPeriodicAssessment: () => {
+    const { dailyRecords, lastAssessmentDay } = get();
+    const completed = dailyRecords.length;
+    return completed >= 7 && (completed - lastAssessmentDay >= 7 || lastAssessmentDay === 0);
   }
 }));

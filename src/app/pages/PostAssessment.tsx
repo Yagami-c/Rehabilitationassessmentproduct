@@ -7,12 +7,14 @@ import { Slider } from '../components/ui/slider';
 
 export function PostAssessment() {
   const navigate = useNavigate();
-  const { setPostAssessment, calculatePostAssessmentLevel, preAssessment } = useStore();
+  const { setPostAssessment, calculatePostAssessmentLevel, preAssessment, needPeriodicAssessment } = useStore();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     squatPainAfter: preAssessment?.squatPainBefore || 0,
     globalFeeling: '没变化' as '更舒服' | '没变化' | '更不适',
     intensityFeeling: '刚好' as '太轻' | '刚好' | '有点强',
+    completedPlan: '' as '是' | '否' | '',
+    incompleteReason: '',
     adverseReactions: [] as string[]
   });
   const [showNextActionModal, setShowNextActionModal] = useState(false);
@@ -36,8 +38,23 @@ export function PostAssessment() {
 
   const submit = () => {
     setPostAssessment(formData);
-    calculatePostAssessmentLevel();
-    setShowNextActionModal(true); // Show action modal instead of navigating right away
+    const { nextLevel, advice } = calculatePostAssessmentLevel();
+    
+    // Save to daily records
+    const { addDailyRecord, preAssessment } = useStore.getState();
+    addDailyRecord({
+      date: new Date().toISOString(),
+      mode: preAssessment ? `L${preAssessment.computedLevel}` : 'L2',
+      squatBefore: preAssessment?.squatPainBefore,
+      squatAfter: formData.squatPainAfter,
+      globalEffect: formData.globalFeeling,
+      intensityFeel: formData.intensityFeeling,
+      completed: formData.completedPlan === '是',
+      notCompletedReason: formData.incompleteReason,
+      adverseFlags: formData.adverseReactions
+    });
+
+    setShowNextActionModal(true);
   };
 
   return (
@@ -46,12 +63,12 @@ export function PostAssessment() {
         <button onClick={() => step > 1 ? setStep(step - 1) : navigate(-1)} className="p-2 -ml-2 text-gray-700 active:bg-gray-100 rounded-full">
           <ChevronLeft size={24} />
         </button>
-        <h1 className="text-lg font-bold text-gray-900">使用后评估 ({step}/4)</h1>
+        <h1 className="text-lg font-bold text-gray-900">使用后评估 ({step}/5)</h1>
         <div className="w-10"></div>
       </div>
 
       <div className="h-1 bg-gray-100 w-full shrink-0">
-        <div className="h-full bg-green-500 transition-all duration-300 ease-out" style={{ width: `${(step / 4) * 100}%` }} />
+        <div className="h-full bg-green-500 transition-all duration-300 ease-out" style={{ width: `${(step / 5) * 100}%` }} />
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 scroll-smooth pb-24">
@@ -190,7 +207,7 @@ export function PostAssessment() {
         {step === 3 && (
           <div className="animate-in slide-in-from-right-4 fade-in duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-2">强度感受</h2>
-            <p className="text-sm text-gray-500 mb-6">您觉得刚才的康养强度怎么样？</p>
+            <p className="text-sm text-gray-500 mb-6">您觉得��才的康养强度怎么样？</p>
             <div className="flex flex-col gap-3">
               {(['太轻', '刚好', '有点强'] as const).map(opt => (
                 <button key={opt} onClick={() => setFormData({...formData, intensityFeeling: opt})} className={clsx("p-4 rounded-xl text-left border-2 transition-all", formData.intensityFeeling === opt ? "border-green-500 bg-green-50 text-green-700 font-bold" : "border-transparent bg-white shadow-sm text-gray-700")}>
@@ -202,6 +219,33 @@ export function PostAssessment() {
         )}
 
         {step === 4 && (
+          <div className="animate-in slide-in-from-right-4 fade-in duration-300">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">方案完成情况</h2>
+            <p className="text-sm text-gray-500 mb-6">您今天是否完成了推荐的完整康养方案？</p>
+            <div className="flex flex-col gap-3 mb-6">
+              {(['是', '否'] as const).map(opt => (
+                <button key={opt} onClick={() => setFormData({...formData, completedPlan: opt, incompleteReason: opt === '是' ? '' : formData.incompleteReason})} className={clsx("p-4 rounded-xl text-left border-2 transition-all", formData.completedPlan === opt ? "border-green-500 bg-green-50 text-green-700 font-bold" : "border-transparent bg-white shadow-sm text-gray-700")}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+            
+            {formData.completedPlan === '否' && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                <p className="text-sm text-gray-500 mb-3">今天没有完成的主要原因？</p>
+                <div className="flex flex-col gap-3">
+                  {['忘记了', '没时间', '效果不明显', '使用不舒服', '其他'].map(reason => (
+                    <button key={reason} onClick={() => setFormData({...formData, incompleteReason: reason})} className={clsx("p-3 rounded-xl text-left border-2 transition-all text-sm", formData.incompleteReason === reason ? "border-green-500 bg-green-50 text-green-700 font-bold" : "border-transparent bg-white shadow-sm text-gray-700")}>
+                      {reason}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {step === 5 && (
           <div className="animate-in slide-in-from-right-4 fade-in duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-2">不良反应排查</h2>
             <p className="text-sm text-gray-500 mb-6">使用后有没有出现以下情况？（可多选）</p>
@@ -220,9 +264,19 @@ export function PostAssessment() {
       </div>
 
       <div className="absolute bottom-0 w-full p-4 bg-white border-t border-gray-100 z-10 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)] pb-safe">
-        <button onClick={() => step < 4 ? setStep(step + 1) : submit()} className="w-full h-12 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium text-[16px] flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-green-200">
-          {step === 4 ? '提交反馈并查看总结' : '下一步'}
-          {step < 4 && <ChevronRight size={18} />}
+        <button onClick={() => {
+          if (step === 4 && formData.completedPlan === '否' && !formData.incompleteReason) {
+            alert('请选择没有完成的原因');
+            return;
+          }
+          if (step === 4 && !formData.completedPlan) {
+            alert('请选择是否完成完整方案');
+            return;
+          }
+          step < 5 ? setStep(step + 1) : submit();
+        }} className="w-full h-12 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium text-[16px] flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-green-200">
+          {step === 5 ? '提交反馈并查看总结' : '下一步'}
+          {step < 5 && <ChevronRight size={18} />}
         </button>
       </div>
 
@@ -234,27 +288,24 @@ export function PostAssessment() {
               <CheckCircle2 size={32} />
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">反馈已记录</h2>
-            <p className="text-[13px] text-gray-500 mb-6">设备使用已完成，您可以选择接下来的安排：</p>
+            <p className="text-[13px] text-gray-500 mb-6">设备使用已完成，今日记录已保存。</p>
             
             <div className="space-y-3">
-              <button 
-                onClick={() => navigate('/training')}
-                className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold shadow-sm shadow-blue-200 active:scale-95 transition-transform"
-              >
-                推荐训练
-              </button>
-              <button 
-                onClick={() => navigate('/education')}
-                className="w-full py-3.5 bg-purple-50 text-purple-700 rounded-xl font-bold border border-purple-100 active:scale-95 transition-transform"
-              >
-                宣传教育
-              </button>
-              <button 
-                onClick={() => navigate('/')}
-                className="w-full py-3.5 bg-gray-50 text-gray-600 rounded-xl font-bold active:scale-95 transition-transform"
-              >
-                跳过
-              </button>
+              {needPeriodicAssessment() ? (
+                <button 
+                  onClick={() => navigate('/seven-day-eval')}
+                  className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold shadow-sm shadow-blue-200 active:scale-95 transition-transform"
+                >
+                  进入7天效果综合评估
+                </button>
+              ) : (
+                <button 
+                  onClick={() => navigate('/')}
+                  className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold shadow-sm shadow-blue-200 active:scale-95 transition-transform"
+                >
+                  退出并返回首页
+                </button>
+              )}
             </div>
           </div>
         </div>

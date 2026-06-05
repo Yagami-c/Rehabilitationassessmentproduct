@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useStore } from '../store/useStore';
-import { Activity, Sparkles, ChevronRight, Play, BookOpen, MessageSquare, Heart, Image as ImageIcon, X, Send, QrCode } from 'lucide-react';
+import { Activity, Sparkles, ChevronRight, Play, BookOpen, MessageSquare, Heart, Image as ImageIcon, X, Send, QrCode, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { DeviceSelectionModal } from '../components/DeviceSelectionModal';
@@ -10,8 +10,11 @@ import Autoplay from 'embla-carousel-autoplay';
 
 export function Home() {
   const navigate = useNavigate();
-  const { profile, isDeviceConnected } = useStore();
+  const { profile, isDeviceConnected, dailyRecords, needPeriodicAssessment, preAssessment, calculatePostAssessmentLevel } = useStore();
   const [showDeviceModal, setShowDeviceModal] = useState(false);
+  const [showDailyAdjustmentModal, setShowDailyAdjustmentModal] = useState(false);
+  const [adjustmentAdvice, setAdjustmentAdvice] = useState('');
+  const [suggestedLevel, setSuggestedLevel] = useState<number | string>(2);
   
   // Forum overlays
   const [showPostEditor, setShowPostEditor] = useState(false);
@@ -39,17 +42,83 @@ export function Home() {
   ];
 
   useEffect(() => {
+    // Check if splash has been shown
+    if (!sessionStorage.getItem('splashShown')) {
+      sessionStorage.setItem('splashShown', 'true');
+      navigate('/splash');
+      return;
+    }
+
     const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding');
     if (!hasCompletedOnboarding && profile) {
       navigate('/condition');
     }
   }, [profile, navigate]);
 
+  // Mock states for demonstration of new features
+  const [showNotification, setShowNotification] = useState(true);
+  const show7DayEval = needPeriodicAssessment();
+
+  // Evaluates state for daily usage
+  const handleStartDaily = () => {
+    if (needPeriodicAssessment()) {
+      navigate('/seven-day-eval');
+      return;
+    }
+
+    if (dailyRecords.length === 0) {
+      // First time
+      navigate('/device-questionnaire');
+    } else {
+      // Has history, show adjustment
+      const { nextLevel, advice } = calculatePostAssessmentLevel();
+      setSuggestedLevel(nextLevel);
+      setAdjustmentAdvice(advice);
+      setShowDailyAdjustmentModal(true);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full relative dark:bg-[#121212] bg-[#F5F7FA] transition-colors">
       <div className="flex-1 overflow-y-auto pb-24">
+        {/* Mock Push Notification */}
+        {showNotification && (
+          <div className="mx-5 mt-4 mb-2 bg-white rounded-xl p-3 shadow-md border-l-4 border-[#2C7CFF] flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+            <div className="p-2 bg-blue-50 rounded-full shrink-0">
+              <Sparkles size={16} className="text-[#2C7CFF]" />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between items-center mb-1">
+                <h4 className="text-sm font-bold text-gray-900">今日康养待完成</h4>
+                <span className="text-[10px] text-gray-400">刚刚</span>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed">下午好，今天的15分钟膝盖唤醒训练还没完成，点击开始吧。</p>
+            </div>
+            <button onClick={() => setShowNotification(false)} className="p-1 text-gray-400 active:text-gray-600">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* 7-Day Assessment Banner */}
+        {show7DayEval && (
+          <div 
+            onClick={() => navigate('/seven-day-eval')}
+            className="mx-5 mt-4 bg-gradient-to-r from-[#7B61FF] to-[#9B85FF] rounded-2xl p-4 shadow-lg shadow-purple-500/20 text-white flex items-center justify-between active:scale-95 transition-transform"
+          >
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="bg-white/20 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">已触发</span>
+                <h4 className="font-bold text-[15px]">7日效果评估已就绪</h4>
+              </div>
+              <p className="text-xs text-white/90">坚持7天啦！点击查看您的康养变化趋势。</p>
+            </div>
+            <ChevronRight size={20} className="text-white/80" />
+          </div>
+        )}
+
         {/* Top Banner and Greeting Block */}
-        <div className="dark:bg-[#1E1E1E] bg-white px-5 pt-6 pb-8 rounded-b-[24px] shadow-sm transition-colors">
+        <div className="dark:bg-[#1E1E1E] bg-white px-5 pt-6 pb-8 rounded-b-[24px] shadow-sm transition-colors mt-4">
           {/* Carousel Banner */}
           <div className="w-full mb-8">
             <Carousel 
@@ -106,6 +175,51 @@ export function Home() {
             </div>
           </div>
 
+          {/* Consecutive Days Tracker */}
+          <div className="mb-6 bg-white dark:bg-[#1E1E1E] rounded-[16px] shadow-sm border border-gray-100 dark:border-[#2C2C2C] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                  <span className="text-orange-500 font-bold text-lg">🔥</span>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold dark:text-[#F5F5F5] text-[#1A1A1A] leading-none mb-1">连续康养打卡</h3>
+                  <p className="text-[11px] dark:text-[#9CA3AF] text-[#6B7280] leading-none">坚持7天将触发综合效果评估</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-[20px] font-black text-orange-500">{dailyRecords.length}</span>
+                <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 ml-0.5">天</span>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center gap-1.5 relative z-10">
+              {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+                const isCompleted = day <= (dailyRecords.length % 7 || (dailyRecords.length > 0 && dailyRecords.length % 7 === 0 ? 7 : 0));
+                const isToday = day === (dailyRecords.length % 7 || 0) + 1;
+                
+                return (
+                  <div key={day} className="flex flex-col items-center gap-1.5 flex-1">
+                    <div className={clsx(
+                      "w-full aspect-square rounded-full flex items-center justify-center text-[13px] font-bold transition-all relative",
+                      isCompleted 
+                        ? "bg-orange-500 text-white shadow-sm shadow-orange-500/30" 
+                        : isToday 
+                        ? "bg-orange-50 dark:bg-orange-900/20 text-orange-500 border border-orange-200 dark:border-orange-500/30"
+                        : "bg-gray-50 dark:bg-[#2C2C2C] text-gray-400 dark:text-gray-500"
+                    )}>
+                      {isCompleted ? <CheckCircle2 size={16} strokeWidth={3} /> : day}
+                      {day === 7 && !isCompleted && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white dark:border-[#1E1E1E]"></div>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-400 font-medium">{day === 7 ? '评估' : `第${day}天`}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Assessment Card */}
           <div className="bg-[#2C7CFF] rounded-[16px] p-5 text-white relative overflow-hidden shadow-lg shadow-blue-500/20">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
@@ -114,18 +228,18 @@ export function Home() {
               <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
                 <Activity size={18} className="text-blue-100" />
               </div>
-              <span className="font-bold text-[18px] tracking-wide leading-none">今日状态校准</span>
+              <span className="font-bold text-[18px] tracking-wide leading-none">{dailyRecords.length > 0 ? "今日康养方案" : "今日状态校准"}</span>
             </div>
             
             <p className="text-[14px] text-blue-50 leading-relaxed mb-6 relative z-10">
-              完成每日下蹲评估，获取更精准的康养方案。
+              {dailyRecords.length > 0 ? "基于昨天的反馈，已为您生成今天的康养计划。" : "完成每日下蹲评估，获取更精准的康养方案。"}
             </p>
             
             <button 
-              onClick={() => navigate('/device-questionnaire')}
+              onClick={handleStartDaily}
               className="w-full bg-white text-[#2C7CFF] rounded-full py-3.5 font-bold text-[16px] shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all relative z-10 leading-none"
             >
-              <Play size={18} className="fill-current" /> 开始评估
+              <Play size={18} className="fill-current" /> {dailyRecords.length > 0 ? "开始今日康养" : "开始评估"}
             </button>
           </div>
         </div>
@@ -154,9 +268,9 @@ export function Home() {
                 </div>
               </div>
               <div className="flex-1 bg-[#F5F7FA] dark:bg-gray-800 rounded-[12px] p-4 flex flex-col items-center justify-center">
-                <div className="text-[13px] text-[#6B7280] dark:text-gray-400 mb-2 leading-none">完成次数</div>
+                <div className="text-[13px] text-[#6B7280] dark:text-gray-400 mb-2 leading-none">连续天数</div>
                 <div className="text-[24px] font-bold text-[#1A1A1A] dark:text-gray-100 leading-none">
-                  4 <span className="text-[13px] font-normal text-[#6B7280]">次</span>
+                  {dailyRecords.length} <span className="text-[13px] font-normal text-[#6B7280]">天</span>
                 </div>
               </div>
             </div>
@@ -253,6 +367,54 @@ export function Home() {
 
         </div>
       </div>
+
+      {/* Daily Adjustment Modal */}
+      {showDailyAdjustmentModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-5 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative overflow-hidden">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">今日模式调整建议</h2>
+            <p className="text-[14px] text-gray-600 mb-6 text-center leading-relaxed">
+              根据你昨天的反馈：<br/><span className="text-blue-600 font-medium">{adjustmentAdvice}</span>
+            </p>
+            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-500 text-sm">昨天模式：</span>
+                <span className="font-bold">L{preAssessment?.computedLevel}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">今日建议：</span>
+                <span className="font-bold text-blue-600">
+                  {typeof suggestedLevel === 'number' ? `L${suggestedLevel}` : suggestedLevel}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={() => {
+                  if (typeof suggestedLevel === 'number') {
+                    useStore.getState().setPreAssessment({ computedLevel: suggestedLevel });
+                  }
+                  setShowDailyAdjustmentModal(false);
+                  navigate('/device');
+                }}
+                className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold shadow-sm active:scale-95 transition-transform"
+              >
+                接受调整并开始
+              </button>
+              <button 
+                onClick={() => {
+                  setShowDailyAdjustmentModal(false);
+                  navigate('/device');
+                }}
+                className="w-full py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold active:scale-95 transition-transform"
+              >
+                拒绝，保持原模式
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showDeviceModal && (
         <DeviceSelectionModal 

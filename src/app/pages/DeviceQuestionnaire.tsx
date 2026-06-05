@@ -90,8 +90,13 @@ export function DeviceQuestionnaire() {
       return;
     }
 
-    if (step === 6) {
+    if (step === 5) {
       if (isFirstTime === null) return;
+      setStep(6);
+      return;
+    }
+
+    if (step === 6) {
       const level = calculateLevel();
       setPreAssessment({ computedLevel: level });
       navigate('/device');
@@ -148,16 +153,16 @@ export function DeviceQuestionnaire() {
           </div>
         )}
 
-        {step === 2 && (
+        {step === 6 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center py-10">
             <div className="w-32 h-32 mb-6">
               <ImageWithFallback src={image16} alt="Device check" className="w-full h-full object-contain" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-4">设备佩戴确认</h2>
-            <p className="text-gray-600 text-center mb-10">请确保设备已正确佩戴在膝盖上。</p>
+            <p className="text-gray-600 text-center mb-10">请确保设备已正确佩戴在膝盖上并开启电源。</p>
             <div className="flex flex-col gap-3 w-full">
               <button onClick={handleNext} className="w-full bg-blue-600 text-white rounded-xl py-3.5 font-bold shadow-sm">
-                已戴好，继续
+                已戴好并开机，获取推荐模式
               </button>
               <button onClick={() => navigate('/')} className="w-full bg-white border border-gray-200 text-gray-700 rounded-xl py-3.5 font-bold shadow-sm">
                 未戴好，退出
@@ -166,7 +171,7 @@ export function DeviceQuestionnaire() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-6">僵硬/紧张程度评估</h2>
             <p className="text-gray-600 mb-6">你是否感觉膝盖有点紧或活动不开？</p>
@@ -196,7 +201,7 @@ export function DeviceQuestionnaire() {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-6">下蹲疼痛评分</h2>
             
@@ -329,7 +334,7 @@ export function DeviceQuestionnaire() {
           </div>
         )}
 
-        {step === 5 && (
+        {step === 4 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="text-center mb-8 mt-2">
               <h2 className="text-[22px] font-extrabold text-gray-900 mb-2">你更接近哪种体型？</h2>
@@ -404,7 +409,7 @@ export function DeviceQuestionnaire() {
           </div>
         )}
 
-        {step === 6 && (
+        {step === 5 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <h2 className="text-xl font-bold text-gray-900 mb-6">初次使用限制</h2>
             <p className="text-gray-600 mb-6">你是第一次使用这个设备吗？</p>
@@ -437,7 +442,7 @@ export function DeviceQuestionnaire() {
               disabled={isFirstTime === null}
               className="w-full mt-8 bg-blue-600 disabled:opacity-50 text-white rounded-xl py-3.5 font-bold shadow-sm"
             >
-              获取推荐模式
+              下一步
             </button>
           </div>
         )}

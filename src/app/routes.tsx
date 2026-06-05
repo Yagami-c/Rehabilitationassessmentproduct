@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { AppLayout } from './layout/AppLayout';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
+import { Splash } from './pages/Splash';
 import { ProfileForm } from './pages/ProfileForm';
 import { Disclaimer } from './pages/Disclaimer';
 import { ConditionForm } from './pages/ConditionForm';
@@ -15,11 +16,17 @@ import { DeviceQuestionnaire } from './pages/DeviceQuestionnaire';
 import { ShareEdit } from './pages/ShareEdit';
 import { CameraEval } from './pages/CameraEval';
 import { Points } from './pages/Points';
+import { SevenDayEval } from './pages/SevenDayEval';
+import { TrainingSummary } from './pages/TrainingSummary';
 
 import { TrainingPlayback } from './pages/TrainingPlayback';
 import { PlanSettings } from './pages/PlanSettings';
 
 export const router = createBrowserRouter([
+  {
+    path: '/splash',
+    Component: Splash,
+  },
   {
     path: '/',
     Component: AppLayout,
@@ -84,7 +91,15 @@ export const router = createBrowserRouter([
     Component: DeviceQuestionnaire,
   },
   {
+    path: '/seven-day-eval',
+    Component: SevenDayEval,
+  },
+  {
+    path: '/training-summary',
+    Component: TrainingSummary,
+  },
+  {
     path: '*',
-    element: <Navigate to="/" replace />,
+    element: <Navigate to="/splash" replace />,
   }
 ]);
